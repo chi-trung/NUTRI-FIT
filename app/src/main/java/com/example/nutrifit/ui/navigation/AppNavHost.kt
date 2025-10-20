@@ -6,20 +6,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nutrifit.ui.components.BottomNavBar
+import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
 import com.example.nutrifit.ui.screens.home.HomeScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen
 import com.example.nutrifit.ui.screens.map.MapScreen
 import com.example.nutrifit.ui.screens.meal.MealScreen
 import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
 import com.example.nutrifit.ui.screens.profile.ProfileScreen
-import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
-import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
+import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 
 @Composable
 fun AppNavHost() {
@@ -27,10 +28,15 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination: NavDestination? = backStackEntry?.destination
 
-    val showBottomBar = when (currentDestination?.route) {
-        NavRoutes.Home, NavRoutes.Meal, NavRoutes.Workout, NavRoutes.Map, NavRoutes.Profile -> true
-        else -> false
-    }
+    // Các route hiển thị BottomBar (giữ nguyên nếu NavRoutes.* là String)
+    val bottomBarRoutes = setOf(
+        NavRoutes.Home,
+        NavRoutes.Meal,
+        NavRoutes.Workout,
+        NavRoutes.Map,
+        NavRoutes.Profile
+    )
+    val showBottomBar = currentDestination?.route in bottomBarRoutes
 
     Scaffold(
         bottomBar = {
@@ -40,8 +46,13 @@ fun AppNavHost() {
                     onNavigate = { route ->
                         if (route != currentDestination?.route) {
                             navController.navigate(route) {
-                                popUpTo(NavRoutes.Home) { inclusive = false }
+                                // popUpTo bằng route của startDestination nếu có, fallback về Home route
+                                val startRoute = navController.graph.findStartDestination().route ?: NavRoutes.Home
+                                popUpTo(startRoute) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     }
@@ -52,7 +63,7 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = NavRoutes.Onboarding,
-            modifier = Modifier.padding(paddingValues)
+            modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
@@ -61,6 +72,7 @@ fun AppNavHost() {
                     }
                 })
             }
+
             composable(NavRoutes.Login) {
                 LoginScreen(
                     onLogin = {
@@ -72,19 +84,30 @@ fun AppNavHost() {
                     onForgotPw = { navController.navigate(NavRoutes.ForgotPw) }
                 )
             }
+
             composable(NavRoutes.Register) {
                 RegisterScreen(
-                    onRegister = {
+                        onRegister = {
                         navController.navigate(NavRoutes.Home) {
                             popUpTo(NavRoutes.Register) { inclusive = true }
                         }
                     },
-                    onBackToLogin = { navController.navigate(NavRoutes.Login) }
+                    onBackToLogin = {
+                        // Sử dụng popUpTo để tránh stack quá sâu
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        }
+                    }
                 )
             }
+
             composable(NavRoutes.ForgotPw) {
                 ForgotPasswordScreen(
-                    onBackToLogin = { navController.navigate(NavRoutes.Login) },
+                    onBackToLogin = {
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.ForgotPw) { inclusive = true }
+                        }
+                    },
                     onSuccessReset = {
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(NavRoutes.Login) { inclusive = true }
@@ -92,6 +115,8 @@ fun AppNavHost() {
                     }
                 )
             }
+
+            // Bottom tabs
             composable(NavRoutes.Home) { HomeScreen() }
             composable(NavRoutes.Meal) { MealScreen() }
             composable(NavRoutes.Workout) { WorkoutScreen() }
