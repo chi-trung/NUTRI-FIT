@@ -146,7 +146,7 @@ fun ForgotPasswordScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Email input với nút gửi mã bên trong
+                    // Email input
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -154,37 +154,39 @@ fun ForgotPasswordScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        trailingIcon = {
-                            Button(
-                                onClick = {
-                                    if (email.isNotBlank() && !isCodeSent) {
-                                        isCodeSent = true
-                                        seconds = 60
-                                    }
-                                },
-                                enabled = email.isNotBlank() && !isCodeSent,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isCodeSent) Color(0xFF7C7F84) else Color(0xFF56B141),
-                                    disabledContainerColor = Color(0xFF56B141)
-                                ),
-                                shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                                    .height(36.dp)
-                            ) {
-                                Text(
-                                    text = if (isCodeSent) "Đã gửi" else "Gửi mã",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Nút gửi mã - căn giữa
+                    Button(
+                        onClick = {
+                            if (email.isNotBlank() && !isCodeSent) {
+                                isCodeSent = true
+                                seconds = 60
+                            }
+                        },
+                        enabled = email.isNotBlank() && !isCodeSent,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isCodeSent) Color(0xFF7C7F84) else Color(0xFF56B141),
+                            disabledContainerColor = Color(0xFF56B141)
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .height(45.dp)
+                            .width(120.dp)
+                    ) {
+                        Text(
+                            text = if (isCodeSent) "Đã gửi" else "Gửi mã",
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
