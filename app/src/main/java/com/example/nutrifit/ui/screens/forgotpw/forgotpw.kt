@@ -1,10 +1,12 @@
 package com.example.nutrifit.ui.screens.forgotpw
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,39 +16,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,23 +50,34 @@ import kotlinx.coroutines.delay
 fun ForgotPasswordScreen(
     modifier: Modifier = Modifier,
     onBackToLogin: () -> Unit = {},
-    onSuccessReset: () -> Unit = {}
+    onGoToResetPassword: () -> Unit = {}
 ) {
-    // Steps: 1 = input email, 2 = verify code, 3 = reset password
-    var step by remember { mutableStateOf(1) }
-
-    // States
-    val email = remember { mutableStateOf("") }
-    val code = remember { mutableStateOf("") } // 6 digits
-    val newPass = remember { mutableStateOf("") }
-    val confirmPass = remember { mutableStateOf("") }
-
-    // Resend countdown
+    var email by remember { mutableStateOf("") }
+    var otpCode by remember { mutableStateOf("") }
+    var isCodeSent by remember { mutableStateOf(false) }
+    var isCodeValid by remember { mutableStateOf<Boolean?>(null) } // null = chưa check, true = đúng, false = sai
     var seconds by remember { mutableStateOf(0) }
-    LaunchedEffect(step, seconds) {
-        if (step == 2 && seconds > 0) {
+
+    // Countdown timer
+    LaunchedEffect(seconds) {
+        if (seconds > 0) {
             delay(1000)
             seconds -= 1
+        }
+    }
+
+    // Auto verify OTP when 5 digits entered
+    LaunchedEffect(otpCode) {
+        if (otpCode.length == 5) {
+            delay(500) // Delay nhỏ để user thấy
+            // Simulate verification (thay bằng API call thật)
+            if (otpCode == "12345") { // Mock correct code
+                isCodeValid = true
+                delay(1000) // Show green state
+                onGoToResetPassword()
+            } else {
+                isCodeValid = false
+            }
         }
     }
 
@@ -98,74 +102,157 @@ fun ForgotPasswordScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(6.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            // Main card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(800.dp)
+                    .background(
+                        color = Color.White.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(24.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    LogoHeader()
-                    Spacer(Modifier.height(8.dp))
+                    // Logo section
+                    LogoSection()
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Title
                     Text(
-                        text = when (step) {
-                            1 -> "Quên mật khẩu"
-                            2 -> "Nhập mã xác thực"
-                            else -> "Đổi mật khẩu"
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        text = "Quên mật khẩu",
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
                     )
-                    Spacer(Modifier.height(16.dp))
 
-                    when (step) {
-                        1 -> StepEnterEmail(email = email) { // send code
-                            seconds = 60
-                            step = 2
-                        }
-                        2 -> StepVerifyCode(
-                            email = email.value,
-                            code = code,
-                            seconds = seconds,
-                            onResend = {
-                                if (seconds == 0) seconds = 60
-                            },
-                            onConfirm = { if (code.value.length == 6) step = 3 }
-                        )
-                        else -> StepResetPassword(
-                            newPass = newPass,
-                            confirmPass = confirmPass,
-                            onConfirm = {
-                                // Basic validation
-                                if (newPass.value.isNotBlank() && newPass.value == confirmPass.value) {
-                                    onSuccessReset()
-                                }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Description
+                    Text(
+                        text = "Nhập email bạn đã dùng để đăng ký tài khoản",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Email input với nút gửi mã bên trong
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = { Text("Nhập địa chỉ email ") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        trailingIcon = {
+                            Button(
+                                onClick = {
+                                    if (email.isNotBlank() && !isCodeSent) {
+                                        isCodeSent = true
+                                        seconds = 60
+                                    }
+                                },
+                                enabled = email.isNotBlank() && !isCodeSent,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isCodeSent) Color(0xFF7C7F84) else Color(0xFF56B141),
+                                    disabledContainerColor = Color(0xFF56B141)
+                                ),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .height(36.dp)
+                            ) {
+                                Text(
+                                    text = if (isCodeSent) "Đã gửi" else "Gửi mã",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp
+                                )
                             }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
                         )
-                    }
+                    )
 
-                    Spacer(Modifier.height(8.dp))
-                    AnimatedVisibility(visible = step != 3) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // OTP Section - luôn hiển thị
+                    Text(
+                        text = "Nhập mã xác thực ( gồm 5 chữ số )",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // OTP Input Boxes
+                    OTPInputBoxes(
+                        otpCode = otpCode,
+                        onOtpChange = {
+                            otpCode = it
+                            if (it.length < 5) {
+                                isCodeValid = null // Reset validation state
+                            }
+                        },
+                        isValid = isCodeValid
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Error message và resend button
+                    if (isCodeValid == false) {
                         Text(
-                            text = "Không nhận được mã? Gửi lại",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable(enabled = step == 2 && seconds == 0) {
-                                if (step == 2 && seconds == 0) seconds = 60
+                            text = "Mã xác thực sai hoặc không hợp lệ",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = Color(0xFFE53935)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Gửi lại mã",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = Color(0xFF2196F3),
+                                fontWeight = FontWeight.Medium
+                            ),
+                            modifier = Modifier.clickable {
+                                otpCode = ""
+                                isCodeValid = null
+                                seconds = 60
                             }
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Back to login
                     Text(
                         text = "Thử cách đăng nhập khác | Về đăng nhập",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.clickable { onBackToLogin() },
-                        color = MaterialTheme.colorScheme.secondary
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        ),
+                        modifier = Modifier.clickable { onBackToLogin() }
                     )
                 }
             }
@@ -174,202 +261,137 @@ fun ForgotPasswordScreen(
 }
 
 @Composable
-private fun LogoHeader() {
+private fun LogoSection() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = Icons.Default.FitnessCenter,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp)
+        // Logo từ drawable
+        Image(
+            painter = painterResource(R.drawable.logo),
+            contentDescription = "NutriFit Logo",
+            modifier = Modifier.size(80.dp)
         )
-        Spacer(Modifier.height(8.dp))
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // App name
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "NUTRI",
-                style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1AC9AC)
+                )
             )
             Text(
                 text = " - ",
-                style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
             )
             Text(
                 text = "FIT",
-                style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE53935))
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF0004)
+                )
             )
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Subtitle
         Text(
             text = "Lấy lại mật khẩu",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(0.8f)
-        )
-    }
-}
-
-@Composable
-private fun StepEnterEmail(
-    email: MutableState<String>,
-    onSendCode: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Nhập email bạn đã dùng để đăng ký",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(0.8f)
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = email.value,
-            onValueChange = { email.value = it },
-            label = { Text("Địa chỉ email") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(12.dp))
-        Button(
-            onClick = onSendCode,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
-        ) { Text("Gửi mã") }
-    }
-}
-
-@Composable
-private fun StepVerifyCode(
-    email: String,
-    code: MutableState<String>,
-    seconds: Int,
-    onResend: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Mã xác thực đã được gửi đến: $email",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(0.8f)
-        )
-        Spacer(Modifier.height(12.dp))
-        OtpInput(code = code, length = 6)
-        Spacer(Modifier.height(12.dp))
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = if (seconds > 0) "Gửi lại sau ${seconds}s" else "Gửi lại",
-                color = if (seconds > 0) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable(enabled = seconds == 0) { onResend() }
+            style = TextStyle(
+                fontSize = 12.sp,
+                color = Color.Gray
             )
-            Button(
-                onClick = onConfirm,
-                enabled = code.value.length == 6,
-                shape = RoundedCornerShape(10.dp)
-            ) { Text("Xác nhận") }
-        }
+        )
     }
 }
 
 @Composable
-private fun StepResetPassword(
-    newPass: MutableState<String>,
-    confirmPass: MutableState<String>,
-    onConfirm: () -> Unit
+private fun OTPInputBoxes(
+    otpCode: String,
+    onOtpChange: (String) -> Unit,
+    isValid: Boolean?
 ) {
-    var show1 by remember { mutableStateOf(false) }
-    var show2 by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Đổi mật khẩu mới cho tài khoản của bạn",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.alpha(0.8f)
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = newPass.value,
-            onValueChange = { newPass.value = it },
-            label = { Text("Nhập mật khẩu mới") },
-            singleLine = true,
-            visualTransformation = if (show1) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                Icon(
-                    imageVector = if (show1) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    contentDescription = null,
-                    modifier = Modifier.clickable { show1 = !show1 }
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = confirmPass.value,
-            onValueChange = { confirmPass.value = it },
-            label = { Text("Nhập lại mật khẩu") },
-            singleLine = true,
-            visualTransformation = if (show2) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                Icon(
-                    imageVector = if (show2) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    contentDescription = null,
-                    modifier = Modifier.clickable { show2 = !show2 }
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = onConfirm,
-            enabled = newPass.value.isNotBlank() && newPass.value == confirmPass.value,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
-        ) { Text("Xác nhận") }
-    }
-}
-
-@Composable
-private fun OtpInput(
-    code: MutableState<String>,
-    length: Int = 6
-) {
-    // UI hiển thị 6 ô nhập, nhưng state lưu chuỗi
-    val cells = (0 until length).map { idx ->
-        if (idx < code.value.length) code.value[idx].toString() else ""
+    val borderColor = when (isValid) {
+        true -> Color(0xFF4CAF50)  // Xanh lá khi đúng
+        false -> Color(0xFFE53935) // Đỏ khi sai
+        null -> Color.Gray         // Xám khi chưa validate
     }
 
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        cells.forEachIndexed { index, ch ->
+    val focusRequesters = remember { List(5) { FocusRequester() } }
+
+    // OTP Boxes với auto focus
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        repeat(5) { index ->
             OutlinedTextField(
-                value = ch,
-                onValueChange = { input ->
-                    if (input.isNotEmpty()) {
-                        val c = input.last()
-                        if (c.isDigit()) {
-                            val current = code.value
-                            val new = StringBuilder(current)
-                            if (index < current.length) {
-                                new.setCharAt(index, c)
-                            } else if (current.length < length) {
-                                new.append(c)
+                value = if (index < otpCode.length) otpCode[index].toString() else "",
+                onValueChange = { newValue ->
+                    if (newValue.length <= 1 && (newValue.isEmpty() || newValue.all { it.isDigit() })) {
+                        val newOtpCode = otpCode.toMutableList()
+
+                        // Đảm bảo list có đủ 5 phần tử
+                        while (newOtpCode.size < 5) {
+                            newOtpCode.add(' ')
+                        }
+
+                        if (newValue.isEmpty()) {
+                            // Xóa ký tự tại vị trí hiện tại
+                            if (index < newOtpCode.size) {
+                                newOtpCode[index] = ' '
                             }
-                            code.value = new.toString().take(length)
+                            // Focus về ô trước đó nếu có
+                            if (index > 0) {
+                                focusRequesters[index - 1].requestFocus()
+                            }
+                        } else {
+                            // Thêm ký tự mới
+                            newOtpCode[index] = newValue[0]
+                            // Focus sang ô tiếp theo nếu có
+                            if (index < 4) {
+                                focusRequesters[index + 1].requestFocus()
+                            }
                         }
-                    } else {
-                        // xóa ký tự tại ô hiện tại
-                        val current = code.value
-                        if (index < current.length) {
-                            code.value = (current.substring(0, index) + current.substring(index + 1))
-                        }
+
+                        // Tạo string mới và loại bỏ khoảng trắng
+                        val finalCode = newOtpCode.joinToString("").replace(" ", "")
+                        onOtpChange(finalCode)
                     }
                 },
-                textStyle = TextStyle(fontSize = 18.sp, textAlign = TextAlign.Center),
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 4.dp),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface
+                    .focusRequester(focusRequesters[index]),
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 ),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = if (index < otpCode.length) borderColor else Color.Gray,
+                    unfocusedIndicatorColor = if (index < otpCode.length) borderColor else Color.Gray
+                )
             )
         }
     }
+
+    // Auto focus vào ô đầu tiên khi component được tạo
+    LaunchedEffect(Unit) {
+        focusRequesters[0].requestFocus()
+    }
 }
+
+

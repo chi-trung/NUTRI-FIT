@@ -13,8 +13,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nutrifit.ui.components.BottomNavBar
 import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
+import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen2
 import com.example.nutrifit.ui.screens.home.HomeScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen
+import com.example.nutrifit.ui.screens.login.LoginScreen2
 import com.example.nutrifit.ui.screens.map.MapScreen
 import com.example.nutrifit.ui.screens.meal.MealScreen
 import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
@@ -81,6 +83,19 @@ fun AppNavHost() {
                         }
                     },
                     onGoRegister = { navController.navigate(NavRoutes.Register) },
+                    onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
+                    onEmailLogin = { navController.navigate(NavRoutes.Login2) } // THÊM NAVIGATION ĐẾN LOGIN2
+                )
+            }
+
+            composable(NavRoutes.Login2) {
+                LoginScreen2(
+                    onLogin = {
+                        navController.navigate(NavRoutes.Home) {
+                            popUpTo(NavRoutes.Login2) { inclusive = true }
+                        }
+                    },
+                    onGoRegister = { navController.navigate(NavRoutes.Register) },
                     onForgotPw = { navController.navigate(NavRoutes.ForgotPw) }
                 )
             }
@@ -93,9 +108,9 @@ fun AppNavHost() {
                         }
                     },
                     onBackToLogin = {
-                        // Sử dụng popUpTo để tránh stack quá sâu
-                        navController.navigate(NavRoutes.Login) {
-                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        // CHUYỂN VỀ LOGIN2 THAY VÌ LOGIN
+                        navController.navigate(NavRoutes.Login2) {
+                            popUpTo(NavRoutes.Login2) { inclusive = true }
                         }
                     }
                 )
@@ -108,6 +123,19 @@ fun AppNavHost() {
                             popUpTo(NavRoutes.ForgotPw) { inclusive = true }
                         }
                     },
+                    onGoToResetPassword = {
+                        navController.navigate(NavRoutes.ForgotPw2)
+                    }
+                )
+            }
+
+            composable(NavRoutes.ForgotPw2) {
+                ForgotPasswordScreen2(
+                    onBackToLogin = {
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        }
+                    },
                     onSuccessReset = {
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(NavRoutes.Login) { inclusive = true }
@@ -116,7 +144,7 @@ fun AppNavHost() {
                 )
             }
 
-            // Bottom tabs
+            // Bottom tabs - không có animation
             composable(NavRoutes.Home) { HomeScreen() }
             composable(NavRoutes.Meal) { MealScreen() }
             composable(NavRoutes.Workout) { WorkoutScreen() }

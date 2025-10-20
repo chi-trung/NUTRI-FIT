@@ -26,7 +26,8 @@ import com.example.nutrifit.R
 fun LoginScreen(
     onLogin: () -> Unit,
     onGoRegister: () -> Unit,
-    onForgotPw: () -> Unit
+    onForgotPw: () -> Unit,
+    onEmailLogin: () -> Unit = {} // THÊM PARAMETER CHO EMAIL LOGIN
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -175,9 +176,9 @@ fun LoginScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Nút Email (viền trắng)
+            // Nút Email (viền trắng) - CHUYỂN ĐẾN LOGINSCREEN2
             OutlinedButton(
-                onClick = onLogin,
+                onClick = onEmailLogin, // THAY ĐỔI TỪ onLogin THÀNH onEmailLogin
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.fillMaxWidth(),
                 border = BorderStroke(2.dp, Color.White),
