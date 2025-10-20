@@ -8,4 +8,8 @@ object NavRoutes {
     const val Workout = "workout"
     const val Map = "map"
     const val Profile = "profile"
+
+
+    const val Register = "register"
+    const val ForgotPw = "forgotpw"
 }

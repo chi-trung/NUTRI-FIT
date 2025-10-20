@@ -18,6 +18,8 @@ import com.example.nutrifit.ui.screens.meal.MealScreen
 import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
 import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
+import com.example.nutrifit.ui.screens.register.RegisterScreen
+import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
 
 @Composable
 fun AppNavHost() {
@@ -60,11 +62,35 @@ fun AppNavHost() {
                 })
             }
             composable(NavRoutes.Login) {
-                LoginScreen(onLogin = {
-                    navController.navigate(NavRoutes.Home) {
-                        popUpTo(NavRoutes.Login) { inclusive = true }
+                LoginScreen(
+                    onLogin = {
+                        navController.navigate(NavRoutes.Home) {
+                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        }
+                    },
+                    onGoRegister = { navController.navigate(NavRoutes.Register) },
+                    onForgotPw = { navController.navigate(NavRoutes.ForgotPw) }
+                )
+            }
+            composable(NavRoutes.Register) {
+                RegisterScreen(
+                    onRegister = {
+                        navController.navigate(NavRoutes.Home) {
+                            popUpTo(NavRoutes.Register) { inclusive = true }
+                        }
+                    },
+                    onBackToLogin = { navController.navigate(NavRoutes.Login) }
+                )
+            }
+            composable(NavRoutes.ForgotPw) {
+                ForgotPasswordScreen(
+                    onBackToLogin = { navController.navigate(NavRoutes.Login) },
+                    onSuccessReset = {
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        }
                     }
-                })
+                )
             }
             composable(NavRoutes.Home) { HomeScreen() }
             composable(NavRoutes.Meal) { MealScreen() }
