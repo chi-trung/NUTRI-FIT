@@ -22,6 +22,7 @@ import com.example.nutrifit.ui.screens.meal.MealScreen
 import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
 import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
+import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 
 @Composable
@@ -144,12 +145,31 @@ fun AppNavHost() {
                 )
             }
 
+            composable(NavRoutes.Profile) {
+                ProfileScreen(
+                    onNextClicked = {
+                        navController.navigate(NavRoutes.Target) {
+                            popUpTo(NavRoutes.Target) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+
+            composable(NavRoutes.Target) {
+                TargetScreen(
+                    onNextClicked = {
+                        navController.navigate(NavRoutes.Home) {
+                            popUpTo(NavRoutes.Profile) { inclusive = true }
+                        }
+                    }
+                )
+            }
             // Bottom tabs - không có animation
             composable(NavRoutes.Home) { HomeScreen() }
             composable(NavRoutes.Meal) { MealScreen() }
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
-            composable(NavRoutes.Profile) { ProfileScreen() }
         }
     }
 }
