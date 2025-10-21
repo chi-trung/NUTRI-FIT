@@ -11,29 +11,59 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel : ViewModel() {
 
-    var hoTen by mutableStateOf("")
-        private set
-
+    // --- Biến điều hướng ---
+    sealed class NavigationEvent {
+        data object NavigateToNextScreen : NavigationEvent()
+    }
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
-    fun onHoTenChanged(newName: String) {
-        hoTen = newName
-    }
-
     fun onNextClicked() {
-        if (hoTen.isNotBlank()) {
+        // Bạn có thể thêm logic kiểm tra lỗi ở đây, ví dụ:
+        if (hoTen.isNotBlank() && gioiTinh.isNotBlank() && tuoi.isNotBlank() && chieuCao.isNotBlank() && canNang.isNotBlank()) {
             viewModelScope.launch {
                 _navigationEvent.emit(NavigationEvent.NavigateToNextScreen)
             }
         } else {
-            // Xử lý lỗi: họ tên trống
-            println(
-                "Vui lòng nhập họ tên")
+            // Xử lý lỗi: thông tin còn trống
+            println("Vui lòng nhập đầy đủ thông tin")
         }
     }
 
-    sealed class NavigationEvent {
-        data object NavigateToNextScreen : NavigationEvent()
+    // --- Biến cho Họ tên ---
+    var hoTen by mutableStateOf("")
+        private set
+    fun onHoTenChanged(newName: String) {
+        hoTen = newName
+    }
+
+    // --- CÁC BIẾN MỚI ĐƯỢC THÊM ---
+
+    // Biến cho Giới tính
+    var gioiTinh by mutableStateOf("")
+        private set
+    fun onGioiTinhChanged(newGender: String) {
+        gioiTinh = newGender
+    }
+
+    // Biến cho Tuổi
+    var tuoi by mutableStateOf("")
+        private set
+    fun onTuoiChanged(newAge: String) {
+        tuoi = newAge
+    }
+
+    // Biến cho Chiều cao
+    var chieuCao by mutableStateOf("")
+        private set
+    fun onChieuCaoChanged(newHeight: String) {
+        chieuCao = newHeight
+    }
+
+    // Biến cho Cân nặng
+    var canNang by mutableStateOf("")
+        private set
+    fun onCanNangChanged(newWeight: String) {
+        canNang = newWeight
     }
 }
