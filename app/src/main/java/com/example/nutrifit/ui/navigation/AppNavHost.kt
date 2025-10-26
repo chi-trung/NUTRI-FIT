@@ -104,7 +104,7 @@ fun AppNavHost() {
             composable(NavRoutes.Register) {
                 RegisterScreen(
                         onRegister = {
-                        navController.navigate(NavRoutes.Home) {
+                        navController.navigate(NavRoutes.Profile) {
                             popUpTo(NavRoutes.Register) { inclusive = true }
                         }
                     },
