@@ -1,47 +1,34 @@
 package com.example.nutrifit.ui.screens.onboarding
 
-import android.R.attr.data
+import android.R.attr.left
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.nutrifit.R
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
-import com.example.nutrifit.R
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.LazyRow
-
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -71,85 +58,60 @@ fun OnboardingScreen(onStart: () -> Unit) {
     )
 
     val pagerState = rememberPagerState()
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(colorScheme.background)
+            .padding(WindowInsets.statusBars.asPaddingValues())
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         HorizontalPager(count = pages.size, state = pagerState, modifier = Modifier.weight(1f)) { page ->
             val data = pages[page]
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
 
-                // hinh anh
-                when (pagerState.currentPage) {
-                    0 -> Image(
-                        painter = painterResource(id = data.imageRes),
-                        contentDescription = data.title,
-                        contentScale = ContentScale.Crop,
+            if (page > 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = WindowInsets.statusBars.asPaddingValues()
+                            .calculateTopPadding())
+                        .offset(y = (-90).dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // --- Phần hình ảnh ---
+                    Box(
                         modifier = Modifier
-                            .height(230.dp)
-                            .width(230.dp)
-                            .offset(y = (-50).dp)
-                    )
+                            .fillMaxWidth()
+                            .padding(
+                                top = WindowInsets.statusBars.asPaddingValues()
+                                    .calculateTopPadding()
+                            ),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Image(
+                            painter = painterResource(id = data.imageRes),
+                            contentDescription = data.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .height(260.dp)
+                                .width(360.dp)
+                                .clip(RoundedCornerShape(25.dp))
+                        )
+                    }
 
-                    1 -> Image(
-                        painter = painterResource(id = data.imageRes),
-                        contentDescription = data.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .height(317.dp)
-                            .width(370.dp)
-                            .offset(y = (-130).dp)
-                            .clip(RoundedCornerShape(25.dp))
-                    )
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    2 -> Image(
-                        painter = painterResource(id = data.imageRes),
-                        contentDescription = data.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .height(317.dp)
-                            .width(370.dp)
-                            .offset(y = (-130).dp)
-                            .clip(RoundedCornerShape(25.dp))
-                    )
-
-                    3 -> Image(
-                        painter = painterResource(id = data.imageRes),
-                        contentDescription = data.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .height(317.dp)
-                            .width(370.dp)
-                            .offset(y = (-130).dp)
-                            .clip(RoundedCornerShape(25.dp))
-                    )
-
-
-
-
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                //thanh tien trinh
-
-                if (pagerState.currentPage > 0) {
+                    // --- Thanh tiến trình ---
                     LazyRow(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 24.dp)
-                            .offset(y = (-150).dp, x = (-130).dp)
+                            .offset(x = (-125).dp)
                     ) {
                         items(3) { index ->
                             Box(
@@ -160,19 +122,64 @@ fun OnboardingScreen(onStart: () -> Unit) {
                                     .clip(RoundedCornerShape(3.dp))
                                     .background(
                                         if (pagerState.currentPage == index + 1)
-                                            Color.Black
+                                            colorScheme.primary
                                         else
-                                            Color(0xFFD3D9DD)
+                                            colorScheme.outlineVariant
                                     )
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(60.dp))
+
+                    // --- Tiêu đề ---
+                    Text(
+                        text = data.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (data.titleColor == Color.Black)
+                            colorScheme.onBackground
+                        else
+                            data.titleColor,
+                        lineHeight = 28.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        fontSize = 22.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    // --- Mô tả ---
+                    Text(
+                        text = data.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp,
+                        color = colorScheme.onBackground.copy(alpha = 0.85f),
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
                 }
+            }
 
+            // --- Trang đầu tiên ---
+            if (page == 0) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(id = data.imageRes),
+                        contentDescription = data.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .height(230.dp)
+                            .width(230.dp)
+                            .offset(y = -50.dp)
+                    )
 
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                //tieu de
-                if (pagerState.currentPage == 0) {
                     Text(
                         text = buildAnnotatedString {
                             withStyle(
@@ -180,129 +187,106 @@ fun OnboardingScreen(onStart: () -> Unit) {
                                     color = Color(0xFF1AC9AC),
                                     fontWeight = FontWeight.Bold
                                 )
-                            ) {
-                                append("NUTRI")
-                            }
+                            ) { append("NUTRI") }
                             withStyle(
-                                style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)
-                            ) {
-                                append(" - ")
-                            }
+                                style = SpanStyle(
+                                    color = colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) { append(" - ") }
                             withStyle(
-                                style = SpanStyle(color = Color.Red, fontWeight = FontWeight.Bold)
-                            ) {
-                                append("FIT")
-                            }
+                                style = SpanStyle(
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            ) { append("FIT") }
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         fontSize = 46.sp,
-                        modifier = Modifier.offset(y = (-20).dp)
+                        modifier = Modifier.offset(y = (-60).dp)
                     )
 
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                }
-                else  {
-                    Text(
-                        text = data.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = data.titleColor,
-                        modifier = Modifier.offset(y = (-120).dp)
-
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                //noi dung
-
-                if (pagerState.currentPage == 0) {
                     Text(
                         text = data.description,
                         style = MaterialTheme.typography.headlineSmall,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
+                        color = colorScheme.onBackground,
+                        modifier = Modifier.offset(y = 0.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                else {
+
+                    Spacer(modifier = Modifier.height(80.dp))
+
                     Text(
-                        text = data.description,
+                        text = "Bấm vào để tiếp tục",
                         style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.outline,
                         fontSize = 17.sp,
-                        modifier = Modifier.offset(y = (-80).dp)
+                        modifier = Modifier.clickable {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        }
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
-
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(0.dp))
 
         val isLast = pagerState.currentPage == pages.lastIndex
 
-
-        // Hiển thị dòng “Bấm vào để tiếp tục” chỉ ở màn đầu tiên
-        if (pagerState.currentPage == 0) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Bấm vào để tiếp tục",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                fontSize = 17.sp,
-                modifier = Modifier
-                    .offset(y = (-120).dp)
-                    .clickable {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    }
-            )
-        }
-        // nếu không phải màn hình đầu tiên thì sẽ hiển thị nút
         if (pagerState.currentPage > 0) {
             Button(
                 onClick = {
-                    if (isLast) {
-                        onStart()
-                    } else {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
+                    if (isLast) onStart()
+                    else scope.launch {
+                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0x8A8E91),
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(6.dp), // bo góc nhẹ
-                border = BorderStroke(1.dp, Color(0xFFD3D9DD)), // viền xám nhạt
+                colors = if (isLast) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF3475B7),
+                        contentColor = Color.White
+                    )
+                } else {
+                    ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.background,
+                        contentColor = colorScheme.onBackground
+                    )
+                },
+                shape = RoundedCornerShape(8.dp),
+                border = if (isLast) {
+                    BorderStroke(1.dp, colorScheme.outlineVariant)
+                } else {
+                    BorderStroke(1.dp, colorScheme.onBackground)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .padding(horizontal = 24.dp)
-                    .offset(y = (-35).dp)
+                    .padding(horizontal = 0.dp)
+                    .offset(y = (-24).dp)
             ) {
                 Text(
                     text = if (isLast) "Bắt đầu" else "Tiếp tục",
                     fontSize = 18.sp,
-
-                    )
+                    fontWeight = FontWeight.Medium
+                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = "Tôi đã có tài khoản",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Black,
+                color = colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .clickable {
-                        onStart()
-                    }
+                modifier = Modifier.clickable { onStart() }
             )
         }
-
     }
 }
 
@@ -311,5 +295,5 @@ data class OnboardingPage(
     val description: String,
     val imageRes: Int,
     val logo: Painter? = null,
-    val titleColor: Color = Color.Black // mặc định là đen, có thể đổi khi truyền vào
+    val titleColor: Color = Color.Black
 )
