@@ -6,8 +6,10 @@ object NavRoutes {
     const val Login2 = "login2" // THÊM ROUTE CHO LOGINSCREEN2
     const val Home = "home"
     const val Meal = "meal"
+    const val Mealdetail = "mealdetail"
     const val Workout = "workout"
     const val Map = "map"
+    const val Scan = "scan"
     const val Profile = "profile"
 
     const val Target = "target"
