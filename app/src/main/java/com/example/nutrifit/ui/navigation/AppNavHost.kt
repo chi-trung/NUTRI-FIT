@@ -65,8 +65,9 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
+            modifier = Modifier,
             startDestination = NavRoutes.Onboarding,
-            modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
+            // modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
@@ -163,7 +164,7 @@ fun AppNavHost() {
             }
             // Bottom tabs - không có animation
             composable(NavRoutes.Home) { HomeScreen() }
-            composable(NavRoutes.Meal) { MealScreen() }
+            composable(NavRoutes.Meal) { MealScreen(navController) }
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
         }

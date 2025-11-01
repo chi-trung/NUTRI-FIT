@@ -64,7 +64,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorScheme.background)
+            .background(color = Color.White)
             .padding(WindowInsets.statusBars.asPaddingValues())
             .padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -137,10 +137,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         text = data.title,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (data.titleColor == Color.Black)
-                            colorScheme.onBackground
-                        else
-                            data.titleColor,
+                        color = Color.Black,
                         lineHeight = 28.sp,
                         modifier = Modifier.padding(horizontal = 12.dp),
                         fontSize = 22.sp
@@ -154,7 +151,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = 16.sp,
                         lineHeight = 22.sp,
-                        color = colorScheme.onBackground.copy(alpha = 0.85f),
+                        color = Color.Black.copy(alpha = 0.85f),
                         modifier = Modifier.padding(horizontal = 8.dp),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
@@ -213,7 +210,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         style = MaterialTheme.typography.headlineSmall,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorScheme.onBackground,
+                        color = Color.Black,
                         modifier = Modifier.offset(y = 0.dp),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
@@ -254,8 +251,8 @@ fun OnboardingScreen(onStart: () -> Unit) {
                     )
                 } else {
                     ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.background,
-                        contentColor = colorScheme.onBackground
+                        containerColor = Color.White,
+                        contentColor = Color.Black
                     )
                 },
                 shape = RoundedCornerShape(8.dp),
