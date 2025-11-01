@@ -70,7 +70,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HorizontalPager(count = pages.size, state = pagerState, modifier = Modifier.weight(1f)) { page ->
+        HorizontalPager(count = pages.size, state = pagerState, modifier = Modifier.weight(1f),  userScrollEnabled = pagerState.currentPage != 0) { page ->
             val data = pages[page]
 
             if (page > 0) {
@@ -79,7 +79,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         .fillMaxSize()
                         .padding(top = WindowInsets.statusBars.asPaddingValues()
                             .calculateTopPadding())
-                        .offset(y = (-90).dp),
+                        .offset(y = (-85).dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // --- Phần hình ảnh ---

@@ -31,7 +31,7 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination: NavDestination? = backStackEntry?.destination
 
-    // Các route hiển thị BottomBar
+    // Các route hiển thị BottomBar (giữ nguyên nếu NavRoutes.* là String)
     val bottomBarRoutes = setOf(
         NavRoutes.Home,
         NavRoutes.Meal,
@@ -49,6 +49,7 @@ fun AppNavHost() {
                     onNavigate = { route ->
                         if (route != currentDestination?.route) {
                             navController.navigate(route) {
+                                // popUpTo bằng route của startDestination nếu có, fallback về Home route
                                 val startRoute = navController.graph.findStartDestination().route ?: NavRoutes.Home
                                 popUpTo(startRoute) {
                                     saveState = true
@@ -64,7 +65,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Profile,
+            startDestination = NavRoutes.Onboarding,
             modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
@@ -84,7 +85,7 @@ fun AppNavHost() {
                     },
                     onGoRegister = { navController.navigate(NavRoutes.Register) },
                     onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
-                    onEmailLogin = { navController.navigate(NavRoutes.Login2) }
+                    onEmailLogin = { navController.navigate(NavRoutes.Login2) } // THÊM NAVIGATION ĐẾN LOGIN2
                 )
             }
 
@@ -102,12 +103,13 @@ fun AppNavHost() {
 
             composable(NavRoutes.Register) {
                 RegisterScreen(
-                    onRegister = {
+                        onRegister = {
                         navController.navigate(NavRoutes.Profile) {
                             popUpTo(NavRoutes.Register) { inclusive = true }
                         }
                     },
                     onBackToLogin = {
+                        // CHUYỂN VỀ LOGIN2 THAY VÌ LOGIN
                         navController.navigate(NavRoutes.Login2) {
                             popUpTo(NavRoutes.Login2) { inclusive = true }
                         }
@@ -149,6 +151,7 @@ fun AppNavHost() {
                 )
             }
 
+
             composable(NavRoutes.Target) {
                 TargetScreen(
                     onNextClicked = {
@@ -158,11 +161,9 @@ fun AppNavHost() {
                     }
                 )
             }
-
-            // Bottom tabs
+            // Bottom tabs - không có animation
             composable(NavRoutes.Home) { HomeScreen() }
-            composable(NavRoutes.Meal) { MealScreen(navController) } // THÊM NAVCONTROLLER
-//            composable(NavRoutes.Mealdetail) { MealDetailScreen(navController) } // THÊM NAVCONTROLLER
+            composable(NavRoutes.Meal) { MealScreen() }
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
         }
