@@ -23,6 +23,7 @@ import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
 import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
 import com.example.nutrifit.ui.screens.target.TargetScreen
+import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 
 @Composable
