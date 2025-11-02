@@ -25,6 +25,7 @@ import com.example.nutrifit.ui.screens.register.RegisterScreen
 import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
+import com.example.nutrifit.ui.screens.meal.MealDetailScreen
 
 @Composable
 fun AppNavHost() {
@@ -168,6 +169,10 @@ fun AppNavHost() {
             composable(NavRoutes.Meal) { MealScreen(navController) }
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
+            composable("mealdetail/{mealId}") { backStackEntry ->
+                val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
+                MealDetailScreen(mealId = mealId, navController = navController)
+            }
         }
     }
 }
