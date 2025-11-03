@@ -70,9 +70,8 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            modifier = Modifier,
+            modifier = Modifier.padding(paddingValues),
             startDestination = NavRoutes.Onboarding,
-            // modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
