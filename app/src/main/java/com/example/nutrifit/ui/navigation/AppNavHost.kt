@@ -70,7 +70,6 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            modifier = Modifier.padding(paddingValues),
             startDestination = NavRoutes.Onboarding,
         ) {
             composable(NavRoutes.Onboarding) {
