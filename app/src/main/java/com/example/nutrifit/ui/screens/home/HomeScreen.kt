@@ -52,9 +52,19 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.navigation.navOptions
+import android.R.attr.onClick
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.navigation.NavController
+import com.example.nutrifit.ui.navigation.NavRoutes
+import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
     // Hai biến state riêng biệt
     var selectedMeal by remember { mutableStateOf("Sáng") }
     var selectedGoal by remember { mutableStateOf("Tăng cơ") }
@@ -63,8 +73,10 @@ fun HomeScreen() {
         .fillMaxSize()
         .background(Color(0xFFF0F1F3))
         .padding(WindowInsets.statusBars.asPaddingValues())
-        .padding(bottom = 100.dp)) {
+    )
+    {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,7 +215,7 @@ fun HomeScreen() {
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                                 Button(
-                                    onClick = { println("button click") },
+                                    onClick = { navController.navigate("schedule")},
                                     modifier = Modifier
                                         .height(50.dp)
                                         .padding(top = 10.dp),
@@ -725,7 +737,6 @@ fun HomeScreen() {
                         )
                     }
 
-                    // Nút Giảm cân
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -774,135 +785,312 @@ fun HomeScreen() {
                             .padding(16.dp)
                             .background(Color(0xFFF7FCFF), RoundedCornerShape(12.dp))
                     ) {
-                        Column(
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
                         ){
                             Column(
                                 modifier = Modifier
+                                    .offset(x = -10.dp)
                                     .fillMaxWidth()
+                                    .padding(16.dp)
                                     .background(Color(0xFFF7FCFF), RoundedCornerShape(12.dp))
                             ) {
-                                Column {
-                                    // Hàng 1 - CĂN GIỮA
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 10.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
+                                // Hàng 1 - 2 món
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    // Món 1: Trứng ốp la & Bánh mì
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
                                     ) {
-                                        Box() {
+                                        Box(
+                                            contentAlignment = Alignment.Center
+                                        ) {
                                             Image(
                                                 painter = painterResource(id = R.drawable.trungvabanhmi),
-                                                contentDescription = "trung va banh mi",
-                                                modifier = Modifier.size(200.dp)
+                                                contentDescription = "trungvabanhmi",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
                                             )
-                                            Column(modifier = Modifier .padding(top = 100.dp, start = 30.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally){
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
                                                 Text(
                                                     text = "Trứng ốp la & Bánh mì",
-                                                    fontSize = 12.sp,
-                                                    color = Color.Black,
-                                                    modifier = Modifier
-
-                                                )
-                                                Text(
-                                                    text = "2 trứng\n" +
-                                                            "1 lát bánh mì\n" +
-                                                            "dưa leo",
                                                     fontSize = 10.sp,
-                                                    color = Color.Gray
-                                                )
-                                            }
-                                        }
-
-                                        // Spacer(modifier = Modifier.width(16.dp)) // 👈 THÊM KHOẢNG CÁCH
-
-                                        Box(){
-                                            Image(
-                                                painter = painterResource(id = R.drawable.yenmachsuatuoi),
-                                                contentDescription = "yen mach sua tuoi",
-                                                modifier = Modifier.size(200.dp)
-                                            )
-                                            Column(modifier = Modifier .padding(top = 100.dp, start = 30.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally){
-                                                Text(
-                                                    text = "Yến mạch & Sữa tươi",
-                                                    fontSize = 12.sp,
                                                     color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
                                                     modifier = Modifier
-
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•2 trứng",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•1 ổ bánh mì",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•dưa leo",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
                                                 )
                                                 Text(
-                                                    text = "4 muỗng yến mạch\n" +
-                                                            "200ml sữa tươi không đường",
+                                                    text = "228 kcal",
                                                     fontSize = 10.sp,
-                                                    color = Color.Gray
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -40.dp)
                                                 )
                                             }
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(30.dp))
-
-                                    // Hàng 2 - CĂN GIỮA
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 10.dp)
-                                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                                        horizontalArrangement = Arrangement.Center, // 👈 THÊM DÒNG NÀY
-                                        verticalAlignment = Alignment.CenterVertically
+                                    // Món 2: Yến mạch & Sữa tươi
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
                                     ) {
-                                        Box(){
+                                        Box(  contentAlignment = Alignment.Center ) {
                                             Image(
-                                                painter = painterResource(id = R.drawable.khoailangucga),
-                                                contentDescription = "khoai lang uc ga",
-                                                modifier = Modifier.size(200.dp)
+                                                painter = painterResource(id = R.drawable.yenmachsuatuoi),
+                                                contentDescription = "yenmachsuatuoi",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
                                             )
-                                            Column(modifier = Modifier .padding(top = 100.dp, start = 30.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally){
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
                                                 Text(
-                                                    text = "Khoai lang & Ức Gà",
-                                                    fontSize = 12.sp,
+                                                    text = "Yến mạch & Sữa tươi",
+                                                    fontSize = 10.sp,
                                                     color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
                                                     modifier = Modifier
-
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•4 muỗng yến mạch",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•200ml sữa tươi",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = " không đường",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
                                                 )
                                                 Text(
-                                                    text = "150g khoai lang\n" +
-                                                            "80g ức gà áp chảo\n" +
-                                                            "rau xà lách",
+                                                    text = "250 kcal",
                                                     fontSize = 10.sp,
-                                                    color = Color.Gray
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -40.dp)
                                                 )
                                             }
                                         }
+                                    }
+                                }
 
-                                        //Spacer(modifier = Modifier.width(16.dp)) // 👈 THÊM KHOẢNG CÁCH
-                                        Box(){
+
+
+                                // Hàng 2 - 2 món
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .offset(y = -50.dp)
+                                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    // Món 3: Khoai lang & Ức Gà
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.khoailangucga),
+                                                contentDescription = "khoailangucga",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
+                                                Text(
+                                                    text = "Khoai lang & Ức Gà",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•150g khoai lang",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•80g ức gà áp chảo",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•rau xà lách",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                                Text(
+                                                    text = "260 kcal",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -40.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Món 4: Sữa chua Hy Lạp Trái cây
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
                                             Image(
                                                 painter = painterResource(id = R.drawable.suachuatraicay),
                                                 contentDescription = "sua chua trai cay",
-                                                modifier = Modifier.size(200.dp)
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
                                             )
-                                            Column(modifier = Modifier .padding(top = 100.dp, start = 30.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally){
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
                                                 Text(
-                                                    text = "Sữa chua Hy Lạp Trái cây",
-                                                    fontSize = 12.sp,
+                                                    text = " Sữa chua Hy Lạp Trái cây",
+                                                    fontSize = 10.sp,
                                                     color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
                                                     modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•100g sữa chua Hy Lạp",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•50g việt quất",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•1 thìa hạt chia",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
                                                 )
                                                 Text(
-                                                    text = "100g sữa chua Hy Lạp\n" +
-                                                            "50g việt quất/nho\n" +
-                                                            "1 thìa hạt chia",
+                                                    text = "210 kcal",
                                                     fontSize = 10.sp,
-                                                    color = Color.Gray
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -40.dp)
                                                 )
                                             }
                                         }
                                     }
+                                }
+
+                                // Nút Xem thêm
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .offset(y = -30.dp)
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Xem thêm",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF4CAF50),
+                                        modifier = Modifier.clickable(onClick = { })
+                                    )
                                 }
                             }
                         }
@@ -937,6 +1125,376 @@ fun HomeScreen() {
                             color = Color(0xFF4CAF50))
                     }
                 }
+            }
+
+            item{
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = -60.dp)
+                        .padding(start = 20.dp, end = 20.dp)) {
+                    Image(
+                            painter = painterResource(id = R.drawable.hinhminhhoa),
+                        contentDescription = "anh minh hoa",
+                        modifier = Modifier.size(390.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .offset(y = -130.dp)
+                            .fillMaxWidth()
+                            .background(Color(0xFFF7FCFF),
+                                RoundedCornerShape(12.dp))
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Bài tập đề xuất",
+                                    fontSize = 20.sp,
+                                    color = Color.Black,
+                                    modifier = Modifier
+                                        .padding(start = 30.dp)
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(
+                                    text = "Xem tất cả",
+                                    fontSize = 15.sp,
+                                    modifier = Modifier
+                                        .clickable(onClick = { })
+                                        .padding(end = 30.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4CAF50),
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                            ){
+                                // Hàng 1 - 2 món
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    //Phan 1 Squat
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.squat),
+                                                contentDescription = "Squat với tạ",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
+                                                Text(
+                                                    text = "Squat với tạ",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•4 hiệp × 8–10 lần",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•Tập cơ đùi, mông, bụng",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                                Text(
+                                                    text = "Thời gian: 20 phút",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Phan 2 Bench Press
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.bench),
+                                                contentDescription = "Bench Press",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
+                                                Text(
+                                                    text = "Bench Press",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•4 hiệp × 8–10 lần",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•Tập cơ ngực, tay sau,",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = " vai trước",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                                Text(
+                                                    text = "Thời gian: 30 phút",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+
+
+                                // Hàng 2 - 2 món
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp)
+                                        .offset(y= -50.dp ),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    // Phan 3: Deadlift
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.deadlift),
+                                                contentDescription = "Deadlift",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
+                                                Text(
+                                                    text = "Deadlift",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•4 hiệp × 6–8 lần",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•Tập cơ lưng, mông,",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = " đùi sau",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                                Text(
+                                                    text = "Thời gian: 10 phút",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // phan 4 pullup
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.width(170.dp)
+                                    ) {
+                                        Box(  contentAlignment = Alignment.Center ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.pullup),
+                                                contentDescription = "pullup",
+                                                modifier = Modifier
+                                                    .size(175.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center,
+                                                modifier = Modifier .padding(top = 130.dp)) {
+                                                Text(
+                                                    text = "Pull-up",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -6.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•4 hiệp × tối đa lần",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "•Tập cơ lưng xô,",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -30.dp)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = " tay trước",
+                                                    fontSize = 9.sp,
+                                                    color = Color.Gray,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                                Text(
+                                                    text = "Thời gian: 15 phút",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF4CAF50),
+                                                    modifier = Modifier
+                                                        .offset(y = -45.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+
+                            }
+
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        listState.animateScrollToItem(0)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF293BB1),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("Quay lại đầu trang")
+                            }
+
+                        }
+
+
+
+
+
+
+
+
+
+
+                    }
+                }
+
+
             }
 
         }

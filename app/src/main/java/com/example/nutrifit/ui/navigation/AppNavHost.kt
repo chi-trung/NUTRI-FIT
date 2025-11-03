@@ -177,7 +177,7 @@ fun AppNavHost() {
                 )
             }
             // Bottom tabs - không có animation
-            composable(NavRoutes.Home) { HomeScreen() }
+            composable(NavRoutes.Home ) { HomeScreen(navController) }
             composable(NavRoutes.Meal) { MealScreen(navController) }
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
