@@ -26,6 +26,8 @@ import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 import com.example.nutrifit.ui.screens.meal.MealDetailScreen
+import com.example.nutrifit.ui.screens.setting.SettingScreen // dang làm setting
+
 
 @Composable
 fun AppNavHost() {
@@ -68,7 +70,7 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             modifier = Modifier,
-            startDestination = NavRoutes.Onboarding,
+            startDestination = NavRoutes.Home,
             // modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
@@ -153,6 +155,17 @@ fun AppNavHost() {
 
                 )
             }
+
+            composable(NavRoutes.Setting) {
+                SettingScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onSaveChanges = { name, email, phone ->
+                        // Xử lý lưu thay đổi nếu có
+                    },
+                    navController = navController
+                )
+            }
+
 
 
             composable(NavRoutes.Target) {

@@ -62,7 +62,6 @@ import androidx.compose.material3.ButtonDefaults
 fun ProfileScreen() {
     var showNextScreen by remember { mutableStateOf(false) }
     if (showNextScreen) {
-        // 👉 Nếu showNextScreen = true, hiển thị màn hình kế tiếp
         NextScreen(onBack = { showNextScreen = false })
     } else {
 
@@ -1234,7 +1233,6 @@ fun NextScreen(onBack: () -> Unit) {
                 }
 
             }
-
 
 
         Spacer(modifier = Modifier.height(20.dp))

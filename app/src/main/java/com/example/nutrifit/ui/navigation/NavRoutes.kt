@@ -11,8 +11,8 @@ object NavRoutes {
     const val Map = "map"
     const val Profile = "profile"
 
+    const val Setting = "setting" // đang làm setting
     const val Target = "target"
-
     const val Register = "register"
     const val ForgotPw = "forgotpw"
     const val ForgotPw2 = "forgotpw2"

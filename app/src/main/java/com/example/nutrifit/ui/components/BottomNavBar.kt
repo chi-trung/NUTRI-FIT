@@ -28,7 +28,7 @@ sealed class BottomNavItem(val route: String, val label: String, val icon: Image
     data object Meal : BottomNavItem(NavRoutes.Meal, "Thực đơn", Icons.Filled.Restaurant)
     data object Scan : BottomNavItem(NavRoutes.Scan, "Quét mã", Icons.Filled.QrCodeScanner)
     data object Workout : BottomNavItem(NavRoutes.Workout, "Bài tập", Icons.Filled.FitnessCenter)
-    data object Profile : BottomNavItem(NavRoutes.Profile, "Hồ sơ", Icons.Filled.Person)
+    data object Setting : BottomNavItem(NavRoutes.Setting, "Hồ sơ", Icons.Filled.Person)
 }
 
 @Composable
@@ -48,7 +48,7 @@ fun BottomNavBar(currentRoute: String?, onNavigate: (String) -> Unit) {
             BottomNavItem.Meal,
             BottomNavItem.Scan,
             BottomNavItem.Workout,
-            BottomNavItem.Profile
+            BottomNavItem.Setting
         )
 
         Row(
