@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +29,7 @@ sealed class BottomNavItem(val route: String, val label: String, val icon: Image
     data object Meal : BottomNavItem(NavRoutes.Meal, "Thực đơn", Icons.Filled.Restaurant)
     data object Scan : BottomNavItem(NavRoutes.Scan, "Quét mã", Icons.Filled.QrCodeScanner)
     data object Workout : BottomNavItem(NavRoutes.Workout, "Bài tập", Icons.Filled.FitnessCenter)
-    data object Setting : BottomNavItem(NavRoutes.Setting, "Hồ sơ", Icons.Filled.Person)
+    data object Setting : BottomNavItem(NavRoutes.Setting, "Cài đặt", Icons.Filled.Settings)
 }
 
 @Composable

@@ -41,6 +41,7 @@ fun AppNavHost() {
         NavRoutes.Meal,
         NavRoutes.Workout,
         NavRoutes.Map,
+        NavRoutes.Setting,
         // NavRoutes.Profile
     )
     val showBottomBar = currentDestination?.route in bottomBarRoutes
@@ -70,7 +71,7 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             modifier = Modifier,
-            startDestination = NavRoutes.Home,
+            startDestination = NavRoutes.Onboarding,
             // modifier = if (showBottomBar) Modifier.padding(paddingValues) else Modifier
         ) {
             composable(NavRoutes.Onboarding) {
@@ -151,9 +152,7 @@ fun AppNavHost() {
             }
 
             composable(NavRoutes.Profile) {
-                ProfileScreen(
-
-                )
+                ProfileScreen(navController = navController)
             }
 
             composable(NavRoutes.Setting) {

@@ -1,4 +1,4 @@
-package com.example.nutrifit.ui.screens.profile
+    package com.example.nutrifit.ui.screens.profile
 
 import android.R.attr.onClick
 import androidx.compose.foundation.layout.Arrangement
@@ -57,12 +57,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.navigation.NavController
+import com.example.nutrifit.ui.navigation.NavRoutes
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: androidx.navigation.NavController) {
     var showNextScreen by remember { mutableStateOf(false) }
     if (showNextScreen) {
-        NextScreen(onBack = { showNextScreen = false })
+        NextScreen(onBack = { showNextScreen = false }, navController = navController)
     } else {
 
         var name by remember { mutableStateOf("") } // để lưu giá trị nhập
@@ -830,7 +832,7 @@ fun ProfileScreen() {
 @Composable
 // man hinh khi nhan tiep tuc
 
-fun NextScreen(onBack: () -> Unit) {
+fun NextScreen(onBack: () -> Unit, navController: NavController) {
     var isChecked by remember { mutableStateOf(false) }
     var isChecked1 by remember { mutableStateOf(false) }
     var isChecked2 by remember { mutableStateOf(false) }
@@ -1212,7 +1214,9 @@ fun NextScreen(onBack: () -> Unit) {
                     Button(
                         onClick = {
                             // Hành động khi nhấn nút
-                            println("Đã nhấn nút Tiếp tục")
+                            navController.navigate(NavRoutes.Home) {
+                                popUpTo(NavRoutes.Profile) { inclusive = true }
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // xanh dương
                         shape = RoundedCornerShape(8.dp), // bo nhẹ góc
