@@ -163,16 +163,11 @@ fun ProfileScreen(
                 )
                 //can giua cac thanh phan
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(y = 65.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally, // căn giữa theo trục ngang
+                    modifier = Modifier.fillMaxSize().offset(y = 65.dp)
                 ) {
-                    //gop 3 lop avt (ĐÃ THÊM CLICKABLE)
-                    Box(
-                        modifier = Modifier.clickable { launcher.launch("image/*") },
-                        contentAlignment = Alignment.Center
-                    ) {
+                    //gop 3 lop avt
+                    Box() {
                         Image(
                             painter = painterResource(id = R.drawable.ellipse_2),
                             contentDescription = null,
@@ -186,25 +181,12 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(110.dp)
                         )
-
-                        // Hiển thị ảnh đã chọn hoặc ảnh placeholder
-                        if (imageUri != null) {
-                            Image(
-                                painter = rememberAsyncImagePainter(imageUri),
-                                contentDescription = "Ảnh đại diện",
-                                modifier = Modifier
-                                    .size(110.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Image(
-                                painter = painterResource(id = R.drawable.ellipse_1),
-                                contentDescription = "Placeholder",
-                                modifier = Modifier
-                                    .size(110.dp),
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.ellipse_1),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(110.dp),
+                        )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
