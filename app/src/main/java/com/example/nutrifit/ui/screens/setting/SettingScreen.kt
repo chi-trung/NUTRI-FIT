@@ -1230,7 +1230,6 @@ fun SettingScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
-                        // 👇 Lấy context ở đây, ngoài onClick
                         val context = LocalContext.current
 
                         Button(
@@ -1262,7 +1261,7 @@ fun SettingScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(65.dp))
                 }
             }
         }
