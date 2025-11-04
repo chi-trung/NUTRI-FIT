@@ -58,6 +58,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.test)
     implementation(libs.coil.compose)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.threetenabp)
+    implementation(libs.gson)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -65,5 +68,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.threetenabp)
 }

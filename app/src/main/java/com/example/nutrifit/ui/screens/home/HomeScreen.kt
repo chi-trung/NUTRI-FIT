@@ -60,14 +60,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
 import com.example.nutrifit.ui.navigation.NavRoutes
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nutrifit.viewmodel.HomeViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.lazy.items
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    val viewModel: HomeViewModel = viewModel()
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    // Hai biến state riêng biệt
-    var selectedMeal by remember { mutableStateOf("Sáng") }
-    var selectedGoal by remember { mutableStateOf("Tăng cơ") }
+
+    // Collect states from ViewModel
+    val targetState by viewModel.targetState.collectAsState()
+    val mealSuggestions by viewModel.mealSuggestions.collectAsState()
+    val workoutSuggestions by viewModel.workoutSuggestions.collectAsState()
+    val selectedMeal by viewModel.selectedMeal.collectAsState()
+    val selectedGoal by viewModel.selectedGoal.collectAsState()
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -200,14 +210,14 @@ fun HomeScreen(navController: NavController) {
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column() {
                                     Text(
-                                        text = "Mục tiêu: Tăng cơ",
+                                        text = "Mục tiêu: ${targetState.title}",
                                         fontSize = 13.sp,
                                         color = Color.Black,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(7.dp))
                                     Text(
-                                        text = "Mục tiêu: 3000 calo/ngày",
+                                        text = "Mục tiêu: ${targetState.caloriesGoal} calo/ngày",
                                         fontSize = 11.sp,
                                         color = Color.Gray,
                                         fontWeight = FontWeight.Bold
@@ -232,7 +242,7 @@ fun HomeScreen(navController: NavController) {
                                 }
                             }
                             // Progress value (0f -> 1f)
-                            val progress = 0.65f
+                            val progress = targetState.progress
                             val backgroundColor = Color(0xFFD9D9D9)
                             val progressBarColor = Color(0xFF4CAF50)
                             Spacer(modifier = Modifier .height(20.dp))
@@ -254,14 +264,14 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier .height(20.dp))
                             Row() {
                                 Text(
-                                    text = "Đã đạt: 1950",
+                                    text = "Đã đạt: ${targetState.currentCalories}",
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "65%",
+                                    text = "${(targetState.progress * 100).toInt()}%",
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
@@ -625,7 +635,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 6.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(if (selectedMeal == "Sáng") Color.Black else Color(0xFFEFF6F0))
-                            .clickable { selectedMeal = "Sáng" }
+                            .clickable { viewModel.updateSelectedMeal("Sáng") }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -643,7 +653,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 6.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(if (selectedMeal == "Trưa") Color.Black else Color(0xFFEFF6F0))
-                            .clickable { selectedMeal = "Trưa" }
+                            .clickable { viewModel.updateSelectedMeal("Trưa") }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -661,7 +671,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 6.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(if (selectedMeal == "Chiều") Color.Black else Color(0xFFEFF6F0))
-                            .clickable { selectedMeal = "Chiều" }
+                            .clickable { viewModel.updateSelectedMeal("Chiều") }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -679,7 +689,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 6.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(if (selectedMeal == "Tối") Color.Black else Color(0xFFEFF6F0))
-                            .clickable { selectedMeal = "Tối" }
+                            .clickable { viewModel.updateSelectedMeal("Tối") }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -708,7 +718,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 4.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(if (selectedGoal == "Tăng cơ") Color.Black else Color(0xFFF2F6F3))
-                            .clickable { selectedGoal = "Tăng cơ" }
+                            .clickable { viewModel.updateSelectedGoal("Tăng cơ") }
                             .padding(vertical = 6.dp, horizontal = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -726,7 +736,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 2.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(if (selectedGoal == "Tăng cân") Color.Black else Color(0xFFF2F6F3))
-                            .clickable { selectedGoal = "Tăng cân" }
+                            .clickable { viewModel.updateSelectedGoal("Tăng cân") }
                             .padding(vertical = 6.dp, horizontal = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -743,7 +753,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 2.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(if (selectedGoal == "Giảm cân") Color.Black else Color(0xFFF2F6F3))
-                            .clickable { selectedGoal = "Giảm cân" }
+                            .clickable { viewModel.updateSelectedGoal("Giảm cân") }
                             .padding(vertical = 6.dp, horizontal = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -761,7 +771,7 @@ fun HomeScreen(navController: NavController) {
                             .padding(horizontal = 2.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(if (selectedGoal == "Giữ dáng") Color.Black else Color(0xFFF2F6F3))
-                            .clickable { selectedGoal = "Giữ dáng" }
+                            .clickable { viewModel.updateSelectedGoal("Giữ dáng") }
                             .padding(vertical = 6.dp, horizontal = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
