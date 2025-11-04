@@ -215,7 +215,7 @@ fun HomeScreen(navController: NavController) {
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                                 Button(
-                                    onClick = { navController.navigate("schedule")},
+                                    onClick = { navController.navigate(NavRoutes.Schedule)},
                                     modifier = Modifier
                                         .height(50.dp)
                                         .padding(top = 10.dp),

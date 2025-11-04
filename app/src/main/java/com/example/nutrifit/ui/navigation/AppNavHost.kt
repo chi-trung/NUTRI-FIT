@@ -183,6 +183,10 @@ fun AppNavHost() {
                 val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
                 MealDetailScreen(mealId = mealId, navController = navController)
             }
+
+            composable(NavRoutes.Schedule) {
+                ScheduleScreen(onBackClick = { navController.popBackStack() })
+            }
         }
     }
 }

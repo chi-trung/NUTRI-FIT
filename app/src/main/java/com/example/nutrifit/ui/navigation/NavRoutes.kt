@@ -16,4 +16,5 @@ object NavRoutes {
     const val Register = "register"
     const val ForgotPw = "forgotpw"
     const val ForgotPw2 = "forgotpw2"
+    const val Schedule = "schedule"
 }
