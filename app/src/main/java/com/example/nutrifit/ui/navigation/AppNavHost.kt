@@ -107,7 +107,7 @@ fun AppNavHost() {
 
             composable(NavRoutes.Register) {
                 RegisterScreen(
-                        onRegister = {
+                    onRegister = {
                         navController.navigate(NavRoutes.Profile) {
                             popUpTo(NavRoutes.Register) { inclusive = true }
                         }
@@ -152,9 +152,7 @@ fun AppNavHost() {
             composable(NavRoutes.Profile) {
                 ProfileScreen(
                     onNextClicked = {
-                        navController.navigate(NavRoutes.Target) {
-                            popUpTo(NavRoutes.Target) { inclusive = true }
-                        }
+                        navController.navigate(NavRoutes.Target)
                     }
                 )
             }
@@ -163,16 +161,16 @@ fun AppNavHost() {
                 SettingScreen(
                     onBackClick = { navController.popBackStack() },
                     onSaveChanges = { name, email, phone ->
-                        // Xử lý lưu thay đổi nếu có
                     },
                     navController = navController
                 )
             }
 
-
-
             composable(NavRoutes.Target) {
                 TargetScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    },
                     onNextClicked = {
                         navController.navigate(NavRoutes.Home) {
                             popUpTo(NavRoutes.Profile) { inclusive = true }
