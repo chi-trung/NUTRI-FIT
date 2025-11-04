@@ -150,7 +150,13 @@ fun AppNavHost() {
             }
 
             composable(NavRoutes.Profile) {
-                ProfileScreen(navController = navController)
+                ProfileScreen(
+                    onNextClicked = {
+                        navController.navigate(NavRoutes.Target) {
+                            popUpTo(NavRoutes.Target) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable(NavRoutes.Setting) {

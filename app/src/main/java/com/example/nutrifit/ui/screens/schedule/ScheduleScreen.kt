@@ -82,14 +82,13 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        // 1. Đặt LazyColumn VÀO TRƯỚC (Đây là lớp dưới cùng)
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-            // Không cần padding ở đây vì các item bên trong sẽ tự có padding
         ) {
             item {
-                Spacer(modifier = Modifier.height(80.dp)) // Tạo khoảng trống ở trên cùng cho nút Back và header
+                Spacer(modifier = Modifier.height(80.dp))
             }
 
             // --- PHẦN HEADER ---
@@ -119,7 +118,7 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
             // --- PHẦN NỘI DUNG (THẺ BÀI TẬP) ---
             item {
                 todaySchedule?.let {
-                    // Thêm padding cho các thẻ bên trong
+
                     Column(Modifier.padding(horizontal = 16.dp)) {
                         ScheduleDetailsCard(schedule = it)
                     }
@@ -142,18 +141,18 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
             }
 
             item {
-                Spacer(modifier = Modifier.height(80.dp)) // Khoảng trống ở dưới
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
 
-        // 2. Đặt Nút Quay Lại VÀO SAU để nó nằm trên cùng (Đây là lớp trên cùng)
+        // 2. Đặt Nút Quay Lại ở trên cùng bên trái
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(16.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.White)
-                .clickable { onBackClick() } // Sẽ nhận được click
+                .clickable { onBackClick() }
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Row(
@@ -296,7 +295,7 @@ fun ScheduleHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Nút "Quay về hôm nay" (chỉ hiển thị khi không phải ngày hôm nay)
+        // Nút "Quay về hôm nay"
         if (selectedDate != today) {
             Button(
                 onClick = { onDateChanged(today) },

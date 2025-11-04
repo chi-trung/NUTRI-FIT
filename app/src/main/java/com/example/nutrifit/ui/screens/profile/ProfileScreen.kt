@@ -1,1244 +1,438 @@
-    package com.example.nutrifit.ui.screens.profile
+package com.example.nutrifit.ui.screens.profile
 
-import android.R.attr.onClick
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.nutrifit.R
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.runtime.*
-import androidx.compose.material3.Surface
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ripple
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.material3.Icon
-import androidx.compose.ui.draw.shadow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.navigation.NavController
-import com.example.nutrifit.ui.navigation.NavRoutes
+import com.example.nutrifit.viewmodel.ProfileViewModel
 
 @Composable
-fun ProfileScreen(navController: androidx.navigation.NavController) {
-    var showNextScreen by remember { mutableStateOf(false) }
-    if (showNextScreen) {
-        NextScreen(onBack = { showNextScreen = false }, navController = navController)
-    } else {
+fun ProfileScreen(
+    onNextClicked: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
+) {
+    val hoTen = viewModel.hoTen
+    val gioiTinh = viewModel.gioiTinh
+    val tuoi = viewModel.tuoi
+    val chieuCao = viewModel.chieuCao
+    val canNang = viewModel.canNang
 
-        var name by remember { mutableStateOf("") } // để lưu giá trị nhập
-        val configuration = LocalConfiguration.current
-        val screenHeightDp = configuration.screenHeightDp.dp
-        val bottomPadding = screenHeightDp * 0.2f
-        var expanded by remember { mutableStateOf(false) }
-        val interactionSource = remember { MutableInteractionSource() }
-        var genderExpanded by remember { mutableStateOf(false) }
-        var ageExpanded by remember { mutableStateOf(false) }
-        var heightExpanded by remember { mutableStateOf(false) }
-        var weightExpanded by remember { mutableStateOf(false) }
+    var showDialogFor by remember { mutableStateOf<String?>(null) }
 
-        var selectedGender by remember { mutableStateOf("...") }
-        var selectedAge by remember { mutableStateOf("...") }
-        var selectedHeight by remember { mutableStateOf("...") }
-        var selectedWeight by remember { mutableStateOf("...") }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF0F1F3))
-                .padding(WindowInsets.statusBars.asPaddingValues()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-
-
-            ) {
-
-            // thanh tien trinh
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .offset(y = 20.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.vector_1),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.FillBounds
-                )
-
-                Spacer(modifier = Modifier.width(1.dp))
-
-                Image(
-                    painter = painterResource(id = R.drawable.vector_2),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.FillBounds
-                )
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is ProfileViewModel.NavigationEvent.NavigateToNextScreen -> onNextClicked()
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Row() {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .height(80.dp)
-                        .width(80.dp)
-                        .offset(x = (-5).dp)
-
-
-                )
-
-                Text(
-                    text = "Chào mừng bạn đến với",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontSize = 25.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                )
-            }
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        style = SpanStyle(
-                            color = Color(0xFF1AC9AC),
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) { append("NUTRI") }
-                    withStyle(
-                        style = SpanStyle(
-                            color = colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) { append(" - ") }
-                    withStyle(
-                        style = SpanStyle(
-                            color = Color.Red,
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) { append("FIT") }
-                },
-                style = MaterialTheme.typography.headlineSmall,
-                fontSize = 24.sp,
-                modifier = Modifier.offset(y = (-43).dp, x = (-26).dp)
-            )
-
-            //khung thong tin ca nhan
-            Column(modifier = Modifier.offset(y = -30.dp)) {
-                Box() {
-                    //khung
-                    Image(
-                        painter = painterResource(id = R.drawable.rectangle_80),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxHeight(0.9f)
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-
-                    )
-                    //tieu de
-
-                    Text(
-                        text = "Thông tin cá nhân",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontSize = 23.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .offset(y = 20.dp, x = 40.dp)
-                    )
-                    //can giua cac thanh phan
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally, // căn giữa theo trục ngang
-                        modifier = Modifier.fillMaxSize().offset(y = 65.dp)
-                    ) {
-                        //gop 3 lop avt
-                        Box() {
-                            Image(
-                                painter = painterResource(id = R.drawable.ellipse_2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .offset(x = -5.dp, y = -5.dp)
-                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.ellipse_3),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(110.dp)
-                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.ellipse_1),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(110.dp),
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Tải lên ảnh đại diện",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontSize = 15.sp,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .clickable {}
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-                        OutlinedTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = {
-                                Text(
-                                    "Tên của bạn",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontSize = 13.sp,
-                                    color = Color.Black,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },       // nhãn trên TextField
-                            placeholder = { Text("Nhập họ tên") }, // placeholder bên trong
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(70.dp)
-                                .padding(horizontal = 25.dp),
-                            singleLine = true,
-                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp)
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-                        //khung nho hien thi 4 nut bam dien thong tin ca nhan
-                        Box(modifier = Modifier
-                            .fillMaxSize(), // chiếm toàn màn hình
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnho),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(horizontal = 40.dp)
-                                    .size(700.dp)       // chiếm toàn chiều ngang
-                                    .padding(bottom = bottomPadding)
-                                    .clip(RoundedCornerShape(16.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            Column(modifier = Modifier.padding(bottom = 150.dp),verticalArrangement = Arrangement.spacedBy(8.dp)
-                                )
-                            {
-                                // gioi tinh do tuoi
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    //khung gioi tinh
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .padding(start = 50.dp, end = 5.dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.khungnutbam),
-                                            contentDescription = null,
-                                            modifier = Modifier.fillMaxSize()
-                                                .offset(y = -50.dp)
-                                        )
-
-                                        Text(
-                                            text = "Giới tính",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Gray,
-                                            modifier = Modifier
-                                                .align(Alignment.TopCenter)
-                                                .padding(top = 15.dp)
-                                        )
-
-                                        Column(
-                                            modifier = Modifier.align(Alignment.Center) .offset(x = 20.dp ,y = -30.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Surface(
-                                                color = Color.Transparent,
-                                                modifier = Modifier
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = ripple(
-                                                            bounded = true,
-                                                            color = Color.Gray.copy(alpha = 0.3f)
-                                                        )
-                                                    ) {
-                                                        genderExpanded = true
-                                                    }
-                                            ) {
-                                                Text(
-                                                    text = selectedGender,
-                                                    modifier = Modifier.padding(16.dp),
-                                                    color = Color.Black,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                shape = RoundedCornerShape(25.dp),
-                                                expanded = genderExpanded,
-                                                onDismissRequest = { genderExpanded = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "Nam",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedGender = "Nam"
-                                                        genderExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "Nữ",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedGender = "Nữ"
-                                                        genderExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.TopStart)
-                                                .padding(top = 40.dp, start = 15.dp)
-                                        ) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.khungtronnho),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp)
-                                            )
-                                            Image(
-                                                painter = painterResource(id = R.drawable.gioitinh),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .align(Alignment.Center)
-                                            )
-                                        }
-                                    }
-
-
-                                    //khung do tuoi
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .padding(end = 50.dp, start = 5.dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.khungnutbam),
-                                            contentDescription = null,
-                                            modifier = Modifier.fillMaxSize() .offset(y = -50.dp)
-                                        )
-                                        Text(
-                                            text = "Độ tuổi",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Gray,
-                                            modifier = Modifier
-                                                .align(Alignment.TopCenter)
-                                                .padding(top = 15.dp)
-                                        )
-
-                                        Column(
-                                            modifier = Modifier.align(Alignment.Center) .offset(x = 20.dp ,y = -30.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Surface(
-                                                color = Color.Transparent,
-                                                modifier = Modifier
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = ripple(
-                                                            bounded = true,
-                                                            color = Color.Gray.copy(alpha = 0.3f)
-                                                        )
-                                                    ) {
-                                                        ageExpanded = true
-                                                    }
-                                            ) {
-                                                Text(
-                                                    text = selectedAge,
-                                                    modifier = Modifier.padding(16.dp),
-                                                    color = Color.Black,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                shape = RoundedCornerShape(25.dp),
-                                                expanded = ageExpanded,
-                                                onDismissRequest = { ageExpanded = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "18-25",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedAge = "18-25"
-                                                        ageExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "26-35",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedAge = "26-35"
-                                                        ageExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "36-45",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedAge = "36-45"
-                                                        ageExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "46+",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedAge = "46+"
-                                                        ageExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.TopStart)
-                                                .padding(top = 40.dp, start = 15.dp)
-                                        ) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.khungtronnho),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp)
-                                            )
-                                            Image(
-                                                painter = painterResource(id = R.drawable.dotuoi),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .align(Alignment.Center)
-                                            )
-                                        }
-                                    }
-                                }
-
-
-
-                                // chieu cao can nang
-                                Row(
-                                    modifier = Modifier.fillMaxWidth() .padding(bottom = 20.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    //khung chieu cao
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .padding(start = 50.dp, end = 5.dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.khungnutbam),
-                                            contentDescription = null,
-                                            modifier = Modifier.fillMaxSize() .offset(y = -50.dp)
-                                        )
-                                        Text(
-                                            text = "Chiều cao",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Gray,
-                                            modifier = Modifier
-                                                .align(Alignment.TopCenter)
-                                                .padding(top = 15.dp)
-                                        )
-
-                                        Column(
-                                            modifier = Modifier.align(Alignment.Center) .offset(x = 20.dp ,y = -30.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Surface(
-                                                color = Color.Transparent,
-                                                modifier = Modifier
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = ripple(
-                                                            bounded = true,
-                                                            color = Color.Gray.copy(alpha = 0.3f)
-                                                        )
-                                                    ) {
-                                                        heightExpanded = true
-                                                    }
-                                            ) {
-                                                Text(
-                                                    text = selectedHeight,
-                                                    modifier = Modifier.padding(16.dp),
-                                                    color = Color.Black,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                shape = RoundedCornerShape(25.dp),
-                                                expanded = heightExpanded,
-                                                onDismissRequest = { heightExpanded = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "150-160 cm",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedHeight = ">150 cm"
-                                                        heightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "161-170 cm",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedHeight = ">161 cm"
-                                                        heightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "171-180 cm",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedHeight = ">171 cm"
-                                                        heightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "181-190 cm",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedHeight = ">181 cm"
-                                                        heightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "191+ cm",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedHeight = "191+ cm"
-                                                        heightExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.TopStart)
-                                                .padding(top = 40.dp, start = 15.dp)
-                                        ) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.khungtronnho),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp)
-                                            )
-                                            Image(
-                                                painter = painterResource(id = R.drawable.chieucao),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .align(Alignment.Center)
-                                            )
-                                        }
-                                    }
-
-
-                                    //khung can nang
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .padding(end = 50.dp, start = 5.dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.khungnutbam),
-                                            contentDescription = null,
-                                            modifier = Modifier.fillMaxSize() .offset(y = -50.dp)
-                                        )
-                                        Text(
-                                            text = "Cân nặng",
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Gray,
-                                            modifier = Modifier
-                                                .align(Alignment.TopCenter)
-                                                .padding(top = 15.dp)
-                                        )
-
-                                        Column(
-                                            modifier = Modifier.align(Alignment.Center) .offset(x = 10.dp ,y = -30.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Surface(
-                                                color = Color.Transparent,
-                                                modifier = Modifier
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = ripple(
-                                                            bounded = true,
-                                                            color = Color.Gray.copy(alpha = 0.3f)
-                                                        )
-                                                    ) {
-                                                        weightExpanded = true
-                                                    }
-                                            ) {
-                                                Text(
-                                                    text = selectedWeight,
-                                                    modifier = Modifier.padding(16.dp),
-                                                    color = Color.Black,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                shape = RoundedCornerShape(25.dp),
-                                                expanded = weightExpanded,
-                                                onDismissRequest = { weightExpanded = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "40-50 kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = ">40 kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "51-60 kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = ">51 kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            ">61-70 kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = ">61 kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "71-80 kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = ">71 kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "81-90 kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = ">81 kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Text(
-                                                            "91+ kg",
-                                                            fontSize = 14.sp
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        selectedWeight = "91+ kg"
-                                                        weightExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.TopStart)
-                                                .padding(top = 40.dp, start = 15.dp)
-                                        ) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.khungtronnho),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp)
-                                            )
-                                            Image(
-                                                painter = painterResource(id = R.drawable.cannang),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .align(Alignment.Center)
-                                            )
-                                        }
-                                    }
-                                }
-                            }//
-                        }
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier
-                            .fillMaxSize()                // chiếm toàn màn hình để có thể canh dưới
-                            .padding(bottom = 20.dp)      // cách đáy một chút cho đẹp
-                    ) {
-                        Text(
-                            text = "Tiếp tục",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray,
-                            modifier = Modifier.clickable {
-                                showNextScreen = true
-                            }
-                        )
-
-                    }
-
-                }
-            } //ket thuc column tong
         }
-    }// dieu kien hien thi man hinh, khi chua bam vao nut tiep theo se hien thi man hinh nay
-//
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background) // THAY ĐỔI: Dùng background từ theme
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Header()
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Thông tin cá nhân",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Start,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        AvatarUploader()
+
+        Text(
+            text = "Tải lên ảnh đại diện",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(
+            text = "Tên của bạn",
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = hoTen,
+            onValueChange = { viewModel.onHoTenChanged(it) },
+            placeholder = { Text("Nhập họ tên", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            )
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // THAY ĐỔI: Surface bao bọc toàn bộ grid
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.background // Nền tương tự background chính
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp), // Tối ưu padding nếu cần
+                verticalArrangement = Arrangement.spacedBy(12.dp) // Khoảng cách giữa các hàng
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp) // Khoảng cách giữa các cột
+                ) {
+                    InfoButton(
+                        title = "Giới tính",
+                        iconRes = R.drawable.gioitinh, // THAY ĐỔI: Dùng resource ID
+                        value = gioiTinh,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showDialogFor = "Giới tính" }
+                    )
+                    InfoButton(
+                        title = "Tuổi",
+                        iconRes = R.drawable.dotuoi, // THAY ĐỔI: Dùng resource ID
+                        value = tuoi,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showDialogFor = "Tuổi" }
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp) // Khoảng cách giữa các cột
+                ) {
+                    InfoButton(
+                        title = "Chiều cao",
+                        iconRes = R.drawable.chieucao, // THAY ĐỔI: Dùng resource ID
+                        value = chieuCao,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showDialogFor = "Chiều cao" }
+                    )
+                    InfoButton(
+                        title = "Cân nặng",
+                        iconRes = R.drawable.cannang, // THAY ĐỔI: Dùng resource ID
+                        value = canNang,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showDialogFor = "Cân nặng" }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = { viewModel.onNextClicked() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(text = "Tiếp tục", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+
+    // --- Các Dialog không thay đổi đáng kể, giữ nguyên ---
+    when (showDialogFor) {
+        "Giới tính" -> {
+            GenderSelectionDialog(
+                onDismiss = { showDialogFor = null },
+                onConfirm = { selectedGender ->
+                    viewModel.onGioiTinhChanged(selectedGender)
+                    showDialogFor = null
+                }
+            )
+        }
+        "Tuổi" -> {
+            InfoInputDialog(
+                title = "Nhập tuổi của bạn",
+                onDismiss = { showDialogFor = null },
+                onConfirm = { newAge ->
+                    viewModel.onTuoiChanged(newAge)
+                    showDialogFor = null
+                },
+                placeholder = "Ví dụ: 25",
+                keyboardType = KeyboardType.Number
+            )
+        }
+        "Chiều cao" -> {
+            InfoInputDialog(
+                title = "Nhập chiều cao (cm)",
+                onDismiss = { showDialogFor = null },
+                onConfirm = { newHeight ->
+                    viewModel.onChieuCaoChanged(newHeight)
+                    showDialogFor = null
+                },
+                placeholder = "Ví dụ: 170",
+                keyboardType = KeyboardType.Number
+            )
+        }
+        "Cân nặng" -> {
+            InfoInputDialog(
+                title = "Nhập cân nặng (kg)",
+                onDismiss = { showDialogFor = null },
+                onConfirm = { newWeight ->
+                    viewModel.onCanNangChanged(newWeight)
+                    showDialogFor = null
+                },
+                placeholder = "Ví dụ: 65",
+                keyboardType = KeyboardType.Number
+            )
+        }
+    }
+}
+
+@Composable
+fun Header() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(R.drawable.logo),
+            contentDescription = "Logo Nutri-Fit",
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = "Chào mừng bạn đến với",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "NUTRI - FIT",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+fun AvatarUploader() {
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? -> imageUri = uri }
+    )
+    Box(
+        modifier = Modifier
+            .size(100.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
+            .border(
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                shape = CircleShape
+            )
+            .clickable {
+                launcher.launch("image/*")
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imageUri),
+                contentDescription = "Ảnh đại diện",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Outlined.CloudUpload,
+                contentDescription = "Tải lên ảnh đại diện",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(40.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun InfoButton(
+    title: String,
+    iconRes: Int, // THAY ĐỔI: Nhận Resource ID cho ảnh
+    value: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .height(110.dp), // THAY ĐỔI: Tăng chiều cao để khớp với ảnh
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface, // Nền trắng cho các thẻ
+        tonalElevation = 1.dp // THAY ĐỔI: Thêm một chút đổ bóng nhẹ để tạo chiều sâu
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(12.dp) // THAY ĐỔI: Padding bên trong
+        ) {
+            Image( // THAY ĐỔI: Dùng Image thay vì Icon
+                painter = painterResource(id = iconRes),
+                contentDescription = title,
+                modifier = Modifier.size(36.dp), // THAY ĐỔI: Kích thước icon lớn hơn một chút
+                contentScale = ContentScale.Fit // Đảm bảo ảnh không bị cắt xén
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium, // Kiểu chữ nhỏ hơn cho tiêu đề
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f) // Màu xám nhẹ
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val displayValue = if (value.isBlank()) "Chọn" else value
+            val valueColor = if (value.isBlank()) {
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+            val valueWeight = if (value.isBlank()) FontWeight.Normal else FontWeight.SemiBold
+
+            Text(
+                text = displayValue,
+                style = MaterialTheme.typography.titleMedium, // THAY ĐỔI: Kiểu chữ lớn hơn, nổi bật hơn cho giá trị
+                color = valueColor,
+                fontWeight = valueWeight,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
 }
 
 
 @Composable
-// man hinh khi nhan tiep tuc
+fun InfoInputDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+    placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    var text by remember { mutableStateOf("") }
 
-fun NextScreen(onBack: () -> Unit, navController: NavController) {
-    var isChecked by remember { mutableStateOf(false) }
-    var isChecked1 by remember { mutableStateOf(false) }
-    var isChecked2 by remember { mutableStateOf(false) }
-    var isChecked3 by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF0F1F3))
-            .padding(WindowInsets.statusBars.asPaddingValues()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-
-        // thanh tien trinh
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .offset(y = 20.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.vector_2),
-                contentDescription = null,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.FillBounds
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text(placeholder) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.width(1.dp))
-
-            Image(
-                painter = painterResource(id = R.drawable.vector_1),
-                contentDescription = null,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.FillBounds
-            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(text)
+                }
+            ) {
+                Text("Xác nhận")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Hủy")
+            }
         }
-        Spacer(modifier = Modifier.height(40.dp))
+    )
+}
 
-        Row() {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier
-                    .height(80.dp)
-                    .width(80.dp)
-                    .offset(x = (-5).dp)
-            )
-            Text(
-                text = "Mục tiêu của bạn là gì?",
-                style = MaterialTheme.typography.headlineSmall,
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier
-                    . offset(y = 20.dp)
-            )
-        }
+@Composable
+fun GenderSelectionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    val genderOptions = listOf("Nam", "Nữ", "Khác")
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-            .padding(horizontal = 30.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
         ) {
-            Text(
-                text = "Chúng tôi sẽ cá nhân hóa lộ trình tập luyện và chế độ ăn uống theo mục tiêu của bạn.",
-                fontSize = 14.sp,
-                color = Color.Black,
-            )
-        }
-            Spacer(modifier = Modifier.height(2.dp))
-            Box(  modifier = Modifier
-                .padding(bottom = 110.dp)
-                .padding(start = 17.dp, end = 17.dp)
-                ,contentAlignment = Alignment.Center){
-                Image(
-                    painter = painterResource(id = R.drawable.khungnho2),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(800.dp)
-                        .clip(RoundedCornerShape(25.dp)),
-                    contentScale = ContentScale.Crop
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "Chọn giới tính",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // o an uong lanh manh
-                    Box() {
-                        if(isChecked) {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        else {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        Row(modifier = Modifier .offset(x = 50.dp, y = 10.dp) ) {
-                            Column() {
-                                Text(
-                                    text = "Ăn uống lành mạnh",
-                                    fontSize = 15.sp,
-                                    color = Color.Black,
-                                    modifier = Modifier .offset(x = 10.dp)
-                                )
-                                Text(
-                                    text = "Đốt mỡ, thon gọn một cách khoa học",
-                                    fontSize = 9.sp,
-                                    color = Color.Black
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 80.dp, y = 20.dp)
-                                    .padding(end = 40.dp)
-                                    .size(27.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(
-                                        if (isChecked) Color(0xFF4CAF50) else Color.Transparent
-                                    )
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isChecked) Color(0xFF4CAF50) else Color.Gray,
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                    .clickable { isChecked = !isChecked },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isChecked) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Checked",
-                                        tint = Color.White // Dấu tích trắng
-                                    )
-                                }
-                            }
-
-                        }
-
-                    }
-                    Spacer(modifier = Modifier.height ( 10.dp))
-                    // o giam can
-                    Box() {
-                        if(isChecked1) {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        else {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        Row(modifier = Modifier .offset(x = 50.dp, y = 10.dp) ) {
-                            Column() {
-                                Text(
-                                    text = "Giảm cân",
-                                    fontSize = 15.sp,
-                                    color = Color.Black,
-                                    modifier = Modifier .offset(x = 10.dp)
-                                )
-                                Text(
-                                    text = "Phát triển cơ bắp, tăng cân lành mạnh",
-                                    fontSize = 9.sp,
-                                    color = Color.Black
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 75.dp,y = 20.dp)
-                                    .size(27.dp) // Kích thước ô
-                                    .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                    .background(
-                                        if (isChecked1) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                    )
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isChecked1) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                    .clickable { isChecked1 = !isChecked1 }, // Khi nhấn thì đổi trạng thái
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isChecked1) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Checked",
-                                        tint = Color.White // Dấu tích trắng
-                                    )
-                                }
-                            }
-
-                        }
-
-                    }
-                    Spacer(modifier = Modifier.height ( 10.dp))
-                    // o tang co, tang can
-                    Box() {
-                        if(isChecked2) {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        else {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        Row(modifier = Modifier .offset(x = 50.dp, y = 10.dp) ) {
-                            Column() {
-                                Text(
-                                    text = "Tăng cơ / Tăng cân",
-                                    fontSize = 15.sp,
-                                    color = Color.Black,
-                                    modifier = Modifier .offset(x = 10.dp)
-                                )
-                                Text(
-                                    text = "Cân bằng tập luyện và dinh dưỡng luôn khỏe mạnh",
-                                    fontSize = 9.sp,
-                                    color = Color.Black
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 20.dp,y = 20.dp)
-                                    .size(27.dp) // Kích thước ô
-                                    .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                    .background(
-                                        if (isChecked2) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                    )
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isChecked2) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                    .clickable { isChecked2 = !isChecked2 }, // Khi nhấn thì đổi trạng thái
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isChecked2) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Checked",
-                                        tint = Color.White // Dấu tích trắng
-                                    )
-                                }
-                            }
-
-                        }
-
-                    }
-                    Spacer(modifier = Modifier.height ( 10.dp))
-                    //o giu dang va duy tri suc khoe
-                    Box() {
-                        if(isChecked3) {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        else {
-                            Image(
-                                painter = painterResource(id = R.drawable.khungnutbam2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(90.dp)
-                                    .fillMaxWidth()
-                            )
-                        }
-                        Row(modifier = Modifier .offset(x = 50.dp, y = 10.dp) ) {
-                            Column() {
-                                Text(
-                                    text = "Giữ dáng / Duy trì sức khỏe",
-                                    fontSize = 15.sp,
-                                    color = Color.Black,
-                                    modifier = Modifier .offset(x = 10.dp)
-                                )
-                                Text(
-                                    text = "Xây dựng thói quen ăn uống khoa học và bền vững",
-                                    fontSize = 9.sp,
-                                    color = Color.Black
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 20.dp,y = 20.dp)
-                                    .size(27.dp) // Kích thước ô
-                                    .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                    .background(
-                                        if (isChecked3) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                    )
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isChecked3) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                    .clickable { isChecked3 = !isChecked3 }, // Khi nhấn thì đổi trạng thái
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isChecked3) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Checked",
-                                        tint = Color.White // Dấu tích trắng
-                                    )
-                                }
-                            }
-
-                        }
-
-                    }
-                    Spacer(modifier = Modifier.height ( 28.dp))
+                genderOptions.forEach { gender ->
                     Text(
-                        text = "Quay lại",
-                        fontSize = 15.sp,
-                        color = Color.Gray,
+                        text = gender,
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier
-                            .clickable{
-                                onBack()
+                            .fillMaxWidth()
+                            .clickable {
+                                onConfirm(gender)
                             }
+                            .padding(vertical = 12.dp)
                     )
                 }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom,
-                    modifier = Modifier
-                        .offset(y = 60.dp)
-                        .fillMaxSize()
-
-                ) {
-                    if(isChecked or isChecked1 or isChecked2 or isChecked3 == false){
-                        Text(
-                            text = "Tiếp tục",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.LightGray,
-                        )
-                    }
-
-                    else{
-                    Button(
-                        onClick = {
-                            // Hành động khi nhấn nút
-                            navController.navigate(NavRoutes.Home) {
-                                popUpTo(NavRoutes.Profile) { inclusive = true }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // xanh dương
-                        shape = RoundedCornerShape(8.dp), // bo nhẹ góc
-                        modifier = Modifier
-                            .fillMaxWidth(0.95f) // chiều rộng khoảng 60% màn hình
-                            .height(48.dp)      // chiều cao
-                            .shadow(4.dp, RoundedCornerShape(8.dp)) // bóng mờ nhẹ
-                    ) {
-                        Text(
-                            text = "Tiếp tục",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
-
-                }
-
             }
-
-
-        Spacer(modifier = Modifier.height(20.dp))
+        }
     }
 }
