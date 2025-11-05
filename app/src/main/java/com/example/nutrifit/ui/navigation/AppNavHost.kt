@@ -101,8 +101,10 @@ fun AppNavHost() {
                         }
                     },
                     onGoRegister = { navController.navigate(NavRoutes.Register) },
-                    onForgotPw = { navController.navigate(NavRoutes.ForgotPw) }
-                )
+                    onGoBack = { navController.popBackStack() }, // THÊM onGoBack ĐỂ QUAY LẠI LOGINSCREEN.KT
+                    onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
+
+                    )
             }
 
             composable(NavRoutes.Register) {

@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -43,20 +44,23 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.nutrifit.R
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.widget.Toast
 
 // Định nghĩa các màu sắc
 private val NutriColor = Color(0xFF1AC9AC)
 private val CornerRadius = 16.dp
 private val GoogleButtonColor = Color(0xFF4285F4) // Màu Google blue
-private val FacebookButtonColor = Color(0xFF1877F2) // Màu Facebook blue
+private val GitHubButtonColor = Color(0xFF24292E) // Màu GitHub (đen xám)
 
 @Composable
 fun LoginScreen2(
     onLogin: () -> Unit,
     onGoRegister: () -> Unit,
+    onGoBack: () -> Unit, // Thêm callback cho nút back để quay lại LoginScreen.kt
     onForgotPw: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -100,7 +104,7 @@ fun LoginScreen2(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Header với nút back và chữ Đăng ký
-                    HeaderSection2(onGoRegister = onGoRegister)
+                    HeaderSection2(onGoBack = onGoBack, onGoRegister = onGoRegister)
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -119,7 +123,8 @@ fun LoginScreen2(
                         onRememberMeChange = { rememberMe = it },
                         focusManager = focusManager,
                         onLogin = onLogin,
-                        onForgotPw = onForgotPw
+                        onForgotPw = onForgotPw,
+                        onGoRegister = onGoRegister // Truyền callback này vào LoginForm2
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -133,12 +138,12 @@ fun LoginScreen2(
 }
 
 @Composable
-fun HeaderSection2(onGoRegister: () -> Unit) {
+fun HeaderSection2(onGoBack: () -> Unit, onGoRegister: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Nút back với animation
+        // Nút back với animation - Bây giờ gọi onGoBack để quay lại LoginScreen.kt
         var isBackPressed by remember { mutableStateOf(false) }
         val backScale by animateFloatAsState(
             targetValue = if (isBackPressed) 0.9f else 1f,
@@ -162,7 +167,7 @@ fun HeaderSection2(onGoRegister: () -> Unit) {
 
                 ) {
                     isBackPressed = true
-                    onGoRegister()
+                    onGoBack() // Thay đổi từ onGoRegister thành onGoBack
                     // Reset animation
                     kotlinx.coroutines.GlobalScope.launch {
                         kotlinx.coroutines.delay(100)
@@ -173,7 +178,7 @@ fun HeaderSection2(onGoRegister: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Đăng ký",
+            text = "Quay lại",
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             color = Color.Black
@@ -242,8 +247,12 @@ fun LoginForm2(
     onRememberMeChange: (Boolean) -> Unit,
     focusManager: FocusManager,
     onLogin: () -> Unit,
-    onForgotPw: () -> Unit
+    onForgotPw: () -> Unit,
+    onGoRegister: () -> Unit // Thêm callback này
 ) {
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -346,7 +355,17 @@ fun LoginForm2(
         Button(
             onClick = {
                 isLoginPressed = true
-                onLogin()
+                // Thực hiện đăng nhập Firebase
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            // Đăng nhập thành công
+                            onLogin()
+                        } else {
+                            // Xử lý lỗi: hiển thị Toast (không chỉnh sửa UI, nhưng cần thông báo lỗi)
+                            Toast.makeText(context, "Đăng nhập thất bại: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 // Reset animation sau một chút
                 kotlinx.coroutines.GlobalScope.launch {
                     kotlinx.coroutines.delay(100)
@@ -373,6 +392,26 @@ fun LoginForm2(
                 color = Color.White
             )
         }
+
+        // **Thêm phần này: Text "Chưa có tài khoản? Đăng ký ngay"**
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Chưa có tài khoản? ",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = "Đăng ký ngay",
+                fontSize = 14.sp,
+                color = NutriColor,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { onGoRegister() } // Gọi callback để nav qua RegisterScreen.kt
+            )
+        }
     }
 }
 
@@ -386,14 +425,14 @@ fun SocialLoginSection2() {
             icon = R.drawable.google,
             text = "Đăng nhập với Google",
             buttonColor = GoogleButtonColor,
-            onClick = { /* Handle Google login */ }
+            onClick = { /* Handle Google login - đã có LoginViewModel lo */ }
         )
 
         SocialLoginButton2(
-            icon = R.drawable.facebook,
-            text = "Đăng nhập với Facebook",
-            buttonColor = FacebookButtonColor,
-            onClick = { /* Handle Facebook login */ }
+            icon = R.drawable.github, // Thay đổi từ facebook thành github
+            text = "Đăng nhập với GitHub", // Thay đổi text
+            buttonColor = GitHubButtonColor, // Sử dụng màu GitHub
+            onClick = { /* Handle GitHub login - đã có LoginViewModel lo */ }
         )
     }
 }
@@ -549,7 +588,6 @@ fun PasswordTextField2(
                     }
                     innerTextField()
                 }
-
                 Icon(
                     imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                     contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu",

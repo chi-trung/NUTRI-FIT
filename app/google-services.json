@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1064218808575",
+    "project_id": "nutrifit-ccb77",
+    "storage_bucket": "nutrifit-ccb77.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064218808575:android:294de381d7b7673e7c3cca",
+        "android_client_info": {
+          "package_name": "com.example.nutrifit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1064218808575-s22bpl6fven29ompmu3ts84mttheitmv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrifit",
+            "certificate_hash": "ebc9b546555d66e1aac0a6fd3fa973d59f74c4a4"
+          }
+        },
+        {
+          "client_id": "1064218808575-c1slpn265f1giaom0qai88nivh50uhst.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_XyXYaAiaDNHf2X-i6ONGGJmqjtOebzk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1064218808575-c1slpn265f1giaom0qai88nivh50uhst.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

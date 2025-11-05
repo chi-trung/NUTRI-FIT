@@ -1,22 +1,28 @@
 [versions]
-agp = "8.13.0"
-coilCompose = "2.7.0"
-kotlin = "2.0.21"
-coreKtx = "1.17.0"
-junit = "4.13.2"
-junitVersion = "1.3.0"
-espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.9.4"
-activityCompose = "1.11.0"
-composeBom = "2024.09.00"
-navigation = "2.8.3"
-accompanist = "0.36.0"
-lifecycleViewModelCompose = "2.8.6"
-uiTooling = "1.9.3"
-uiTest = "1.9.3"
-threetenabp = "1.4.6"
-uiText = "1.9.4"
-gson = "2.11.0"
+    agp = "8.13.0"
+    coilCompose = "2.7.0"
+    kotlin = "2.0.21"
+    coreKtx = "1.17.0"
+    junit = "4.13.2"
+    junitVersion = "1.3.0"
+    espressoCore = "3.7.0"
+    lifecycleRuntimeKtx = "2.9.4"
+    activityCompose = "1.11.0"
+    composeBom = "2024.09.00"
+    navigation = "2.8.3"
+    accompanist = "0.36.0"
+    lifecycleViewModelCompose = "2.8.6"
+    uiTooling = "1.9.3"
+    uiTest = "1.9.3"
+    threetenabp = "1.4.6"
+    uiText = "1.9.4"
+    gson = "2.11.0"
+
+    firebase-bom = "33.5.1"
+    play-services-auth = "21.2.0"
+    coroutines-play-services = "1.8.1"
+
+    browser = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,7 +50,17 @@ androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test", ve
 threetenabp = { group = "com.jakewharton.threetenabp", name = "threetenabp", version.ref = "threetenabp" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
 
+# Google Sign In
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "play-services-auth" }
+
+# Coroutines for Firebase
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines-play-services" }
+
+# Browser for GitHub OAuth
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

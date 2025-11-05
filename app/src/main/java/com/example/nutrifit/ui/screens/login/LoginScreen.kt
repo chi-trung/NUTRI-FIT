@@ -1,5 +1,9 @@
 package com.example.nutrifit.ui.screens.login
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,31 +12,72 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
+import com.example.nutrifit.viewmodel.AuthViewModel  // Thay bằng package thực tế của AuthViewModel
 
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,
+    onLogin: () -> Unit,  // Navigate khi đăng nhập thành công
     onGoRegister: () -> Unit,
     onForgotPw: () -> Unit,
-    onEmailLogin: () -> Unit = {} // THÊM PARAMETER CHO EMAIL LOGIN
+    onEmailLogin: () -> Unit = {}  // Chuyển sang LoginScreen2
 ) {
+    val context = LocalContext.current
+    val activity = context as Activity
+    val viewModel: AuthViewModel = viewModel()
+
+    // Khởi tạo Google Sign-In khi Composable load
+    LaunchedEffect(Unit) {
+        viewModel.initGoogleSignIn(context)
+    }
+
+    // Launcher để xử lý kết quả Google Sign-In
+    val googleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.handleGoogleSignInResult(result.data)
+        }
+    }
+
+    // Theo dõi trạng thái auth từ ViewModel
+    val authState by viewModel.authState.collectAsState()
+
+    // Xử lý trạng thái đăng nhập (không thay đổi UI, chỉ navigate hoặc hiển thị Toast)
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthViewModel.AuthState.Success -> {
+                // Đăng nhập thành công: Navigate đến màn hình chính
+                onLogin()
+            }
+            is AuthViewModel.AuthState.Error -> {
+                // Hiển thị lỗi qua Toast (không thay đổi UI)
+                Toast.makeText(context, (authState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}  // Loading hoặc Idle: Không làm gì
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Background image - chiếm toàn bộ màn hình (kể cả dưới system bars)
+        // Background image - giữ nguyên
         Image(
             painter = painterResource(R.drawable.loginbackground),
             contentDescription = null,
@@ -40,7 +85,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Gradient overlay - cũng chiếm toàn bộ màn hình
+        // Gradient overlay - giữ nguyên
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -55,7 +100,7 @@ fun LoginScreen(
                 )
         )
 
-        // Nội dung chính - chỉ áp dụng padding cho nội dung, không cho background
+        // Nội dung chính - giữ nguyên
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,7 +110,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo + Tiêu đề
+            // Logo + Tiêu đề - giữ nguyên
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = "Logo",
@@ -112,13 +157,13 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Nút Facebook
+            // Nút GitHub - Chỉ thay đổi text và icon, giữ nguyên màu xanh Facebook
             Button(
-                onClick = { /* TODO: Login Facebook */ },
+                onClick = { viewModel.signInWithGitHub(activity) },  // Gọi GitHub login
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1877F2),
+                    containerColor = Color(0xFF262626),
                     contentColor = Color.White
                 )
             ) {
@@ -129,24 +174,24 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.facebook),
+                        painter = painterResource(id = R.drawable.github),  // Thay icon thành GitHub
                         contentDescription = null,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.size(10.dp))
                     Text(
-                        text = "Đăng nhập với Facebook",
+                        text = "Đăng nhập với GitHub",  // Thay text thành GitHub
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Start
                     )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // Nút Google (nền trắng)
+            // Nút Google - THAY ĐỔI LOGIC: Đăng nhập bằng Google
             Button(
-                onClick = { /* TODO: Login Google */ },
+                onClick = { googleLauncher.launch(viewModel.getGoogleSignInIntent()) },  // Gọi hàm public để lấy Intent
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -174,11 +219,11 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // Nút Email (viền trắng) - CHUYỂN ĐẾN LOGINSCREEN2
+            // Nút Email - Giữ nguyên: Chuyển sang LoginScreen2
             OutlinedButton(
-                onClick = onEmailLogin, // THAY ĐỔI TỪ onLogin THÀNH onEmailLogin
+                onClick = onEmailLogin,
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.fillMaxWidth(),
                 border = BorderStroke(2.dp, Color.White),
