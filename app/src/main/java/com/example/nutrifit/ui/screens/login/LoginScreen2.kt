@@ -49,6 +49,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nutrifit.viewmodel.AuthViewModel  // THÊM: Import AuthViewModel
 
 // Định nghĩa các màu sắc
 private val NutriColor = Color(0xFF1AC9AC)
@@ -63,6 +67,42 @@ fun LoginScreen2(
     onGoBack: () -> Unit, // Thêm callback cho nút back để quay lại LoginScreen.kt
     onForgotPw: () -> Unit
 ) {
+    val context = LocalContext.current
+    val activity = context as android.app.Activity  // THÊM: Ép kiểu context thành Activity để dùng cho GitHub login
+    val viewModel: AuthViewModel = viewModel()  // THÊM: Khởi tạo AuthViewModel để xử lý đăng nhập xã hội
+
+    // THÊM: Khởi tạo Google Sign-In khi Composable load
+    LaunchedEffect(Unit) {
+        viewModel.initGoogleSignIn(context)
+    }
+
+    // THÊM: Launcher để xử lý kết quả Google Sign-In
+    val googleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.handleGoogleSignInResult(result.data)
+        }
+    }
+
+    // THÊM: Theo dõi trạng thái auth từ ViewModel
+    val authState by viewModel.authState.collectAsState()
+
+    // THÊM: Xử lý trạng thái đăng nhập (navigate hoặc hiển thị Toast khi đăng nhập xã hội thành công/lỗi)
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthViewModel.AuthState.Success -> {
+                // Đăng nhập thành công: Navigate đến màn hình chính
+                onLogin()
+            }
+            is AuthViewModel.AuthState.Error -> {
+                // Hiển thị lỗi qua Toast
+                Toast.makeText(context, (authState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}  // Loading hoặc Idle: Không làm gì
+        }
+    }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
@@ -129,8 +169,11 @@ fun LoginScreen2(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Đăng nhập với mạng xã hội
-                    SocialLoginSection2()
+                    // Đăng nhập với mạng xã hội - THÊM: Truyền callbacks thực tế từ viewModel
+                    SocialLoginSection2(
+                        onGoogleLogin = { googleLauncher.launch(viewModel.getGoogleSignInIntent()) },
+                        onGitHubLogin = { viewModel.signInWithGitHub(activity) }
+                    )
                 }
             }
         }
@@ -416,7 +459,10 @@ fun LoginForm2(
 }
 
 @Composable
-fun SocialLoginSection2() {
+fun SocialLoginSection2(
+    onGoogleLogin: () -> Unit,  // THÊM: Callback cho Google login
+    onGitHubLogin: () -> Unit   // THÊM: Callback cho GitHub login
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -425,14 +471,14 @@ fun SocialLoginSection2() {
             icon = R.drawable.google,
             text = "Đăng nhập với Google",
             buttonColor = GoogleButtonColor,
-            onClick = { /* Handle Google login - đã có LoginViewModel lo */ }
+            onClick = onGoogleLogin  // THÊM: Sử dụng callback thực tế thay vì trống
         )
 
         SocialLoginButton2(
             icon = R.drawable.github, // Thay đổi từ facebook thành github
             text = "Đăng nhập với GitHub", // Thay đổi text
             buttonColor = GitHubButtonColor, // Sử dụng màu GitHub
-            onClick = { /* Handle GitHub login - đã có LoginViewModel lo */ }
+            onClick = onGitHubLogin  // THÊM: Sử dụng callback thực tế thay vì trống
         )
     }
 }
