@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "1064218808575-9cltdtqq1cptcrkb9jc6lj1jmgts1r2n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrifit",
+            "certificate_hash": "e3d8c5e7d706151b8b6dbe3fbcc9ff73776a0d65"
+          }
+        },
+        {
+          "client_id": "1064218808575-h1gd3csvt95sqi34933t290ehjpc4hh7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrifit",
+            "certificate_hash": "4757f3a1f9b299dd3ebc24b2b5496c504c1f13bc"
+          }
+        },
+        {
           "client_id": "1064218808575-s22bpl6fven29ompmu3ts84mttheitmv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
