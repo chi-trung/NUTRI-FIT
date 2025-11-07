@@ -29,25 +29,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
-import com.example.nutrifit.viewmodel.AuthViewModel  // Thay bằng package thực tế của AuthViewModel
+import com.example.nutrifit.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,  // Navigate khi đăng nhập thành công
+    onLogin: () -> Unit,
+    onFirstLogin: () -> Unit,
     onGoRegister: () -> Unit,
     onForgotPw: () -> Unit,
-    onEmailLogin: () -> Unit = {}  // Chuyển sang LoginScreen2
+    onEmailLogin: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val activity = context as Activity
     val viewModel: AuthViewModel = viewModel()
 
-    // Khởi tạo Google Sign-In khi Composable load
     LaunchedEffect(Unit) {
         viewModel.initGoogleSignIn(context)
     }
 
-    // Launcher để xử lý kết quả Google Sign-In
     val googleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -56,28 +55,27 @@ fun LoginScreen(
         }
     }
 
-    // Theo dõi trạng thái auth từ ViewModel
     val authState by viewModel.authState.collectAsState()
 
-    // Xử lý trạng thái đăng nhập (không thay đổi UI, chỉ navigate hoặc hiển thị Toast)
     LaunchedEffect(authState) {
-        when (authState) {
+        when (val state = authState) {
             is AuthViewModel.AuthState.Success -> {
-                // Đăng nhập thành công: Navigate đến màn hình chính
-                onLogin()
+                if (state.isNewUser) {
+                    onFirstLogin()
+                } else {
+                    onLogin()
+                }
             }
             is AuthViewModel.AuthState.Error -> {
-                // Hiển thị lỗi qua Toast (không thay đổi UI)
-                Toast.makeText(context, (authState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
             }
-            else -> {}  // Loading hoặc Idle: Không làm gì
+            else -> {}
         }
     }
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Background image - giữ nguyên
         Image(
             painter = painterResource(R.drawable.loginbackground),
             contentDescription = null,
@@ -85,7 +83,6 @@ fun LoginScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Gradient overlay - giữ nguyên
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -100,7 +97,6 @@ fun LoginScreen(
                 )
         )
 
-        // Nội dung chính - giữ nguyên
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -110,7 +106,6 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo + Tiêu đề - giữ nguyên
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = "Logo",
@@ -157,9 +152,8 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Nút GitHub - Chỉ thay đổi text và icon, giữ nguyên màu xanh Facebook
             Button(
-                onClick = { viewModel.signInWithGitHub(activity) },  // Gọi GitHub login
+                onClick = { viewModel.signInWithGitHub(activity) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -174,13 +168,13 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.github),  // Thay icon thành GitHub
+                        painter = painterResource(id = R.drawable.github),
                         contentDescription = null,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.size(10.dp))
                     Text(
-                        text = "Đăng nhập với GitHub",  // Thay text thành GitHub
+                        text = "Đăng nhập với GitHub",
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Start
                     )
@@ -189,9 +183,8 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Nút Google - THAY ĐỔI LOGIC: Đăng nhập bằng Google
             Button(
-                onClick = { googleLauncher.launch(viewModel.getGoogleSignInIntent()) },  // Gọi hàm public để lấy Intent
+                onClick = { googleLauncher.launch(viewModel.getGoogleSignInIntent()) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -221,7 +214,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Nút Email - Giữ nguyên: Chuyển sang LoginScreen2
             OutlinedButton(
                 onClick = onEmailLogin,
                 shape = RoundedCornerShape(10.dp),

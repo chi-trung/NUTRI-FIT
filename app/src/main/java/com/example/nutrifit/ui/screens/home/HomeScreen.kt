@@ -60,14 +60,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
 import com.example.nutrifit.ui.navigation.NavRoutes
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.CircularProgressIndicator
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = viewModel()) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     // Hai biến state riêng biệt
     var selectedMeal by remember { mutableStateOf("Sáng") }
     var selectedGoal by remember { mutableStateOf("Tăng cơ") }
+
+    val userState by homeViewModel.userState.collectAsState()
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -144,14 +149,32 @@ fun HomeScreen(navController: NavController) {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Chào bạn!",
-                        color = Color.Black,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(start = 25.dp)
-                    )
+                    when (val state = userState) {
+                        is UserState.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                        }
+                        is UserState.Success -> {
+                            val userName = state.user?.name ?: "bạn"
+                            Text(
+                                text = "Chào $userName!",
+                                color = Color.Black,
+                                fontSize = 20.sp,
+                                modifier = Modifier
+                                    .align(Alignment.Start)
+                                    .padding(start = 25.dp)
+                            )
+                        }
+                        is UserState.Error -> {
+                            Text(
+                                text = "Chào bạn!",
+                                color = Color.Black,
+                                fontSize = 20.sp,
+                                modifier = Modifier
+                                    .align(Alignment.Start)
+                                    .padding(start = 25.dp)
+                            )
+                        }
+                    }
                 }
             }
 

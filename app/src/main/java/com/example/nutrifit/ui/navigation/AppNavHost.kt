@@ -70,7 +70,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Onboarding,
+            startDestination = NavRoutes.Onboarding, // Onboarding
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
@@ -87,9 +87,14 @@ fun AppNavHost() {
                             popUpTo(NavRoutes.Login) { inclusive = true }
                         }
                     },
+                    onFirstLogin = {
+                        navController.navigate(NavRoutes.Profile) {
+                            popUpTo(NavRoutes.Login) { inclusive = true }
+                        }
+                    },
                     onGoRegister = { navController.navigate(NavRoutes.Register) },
                     onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
-                    onEmailLogin = { navController.navigate(NavRoutes.Login2) } // THÊM NAVIGATION ĐẾN LOGIN2
+                    onEmailLogin = { navController.navigate(NavRoutes.Login2) }
                 )
             }
 
@@ -100,8 +105,13 @@ fun AppNavHost() {
                             popUpTo(NavRoutes.Login2) { inclusive = true }
                         }
                     },
+                    onFirstLogin = {
+                        navController.navigate(NavRoutes.Profile) {
+                            popUpTo(NavRoutes.Login2) { inclusive = true }
+                        }
+                    },
                     onGoRegister = { navController.navigate(NavRoutes.Register) },
-                    onGoBack = { navController.popBackStack() }, // THÊM onGoBack ĐỂ QUAY LẠI LOGINSCREEN.KT
+                    onGoBack = { navController.popBackStack() },
                     onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
 
                     )
@@ -115,7 +125,6 @@ fun AppNavHost() {
                         }
                     },
                     onBackToLogin = {
-                        // CHUYỂN VỀ LOGIN2 THAY VÌ LOGIN
                         navController.navigate(NavRoutes.Login2) {
                             popUpTo(NavRoutes.Login2) { inclusive = true }
                         }
