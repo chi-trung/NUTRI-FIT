@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1064218808575-77inqtkml7qscm661auf7np6mq61ba52.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrifit",
+            "certificate_hash": "c4a3e4de5543d7b58bf2725b5f995b62721d9107"
+          }
+        },
+        {
           "client_id": "1064218808575-9cltdtqq1cptcrkb9jc6lj1jmgts1r2n.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
