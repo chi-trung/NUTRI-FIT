@@ -1,5 +1,6 @@
 package com.example.nutrifit.ui.screens.target
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,21 +17,39 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
+import com.example.nutrifit.viewmodel.TargetViewModel
 
 @Composable
 fun TargetScreen(
     onBack: () -> Unit,
-    onNextClicked: () -> Unit // <-- THAY ĐỔI 1: Thêm tham số onNextClicked
+    onNextClicked: () -> Unit
 ) {
-    var isChecked by remember { mutableStateOf(false) }
-    var isChecked1 by remember { mutableStateOf(false) }
-    var isChecked2 by remember { mutableStateOf(false) }
-    var isChecked3 by remember { mutableStateOf(false) }
+    val viewModel: TargetViewModel = viewModel()
+    val context = LocalContext.current
+    val saveState by viewModel.saveState.collectAsState()
+
+    var selectedGoal by remember { mutableStateOf("") }
+
+    LaunchedEffect(saveState) {
+        when (val state = saveState) {
+            is TargetViewModel.SaveState.Success -> {
+                Toast.makeText(context, "Goal saved!", Toast.LENGTH_SHORT).show()
+                onNextClicked()
+            }
+            is TargetViewModel.SaveState.Error -> {
+                Toast.makeText(context, "Error: ${state.message}", Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -122,249 +141,20 @@ fun TargetScreen(
                     .padding(top = 30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // o an uong lanh manh
-                Box() {
-                    if (isChecked) {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                    Row(modifier = Modifier.offset(x = 50.dp, y = 10.dp)) {
-                        Column() {
-                            Text(
-                                text = "Ăn uống lành mạnh",
-                                fontSize = 15.sp,
-                                color = Color.Black,
-                                modifier = Modifier.offset(x = 10.dp)
-                            )
-                            Text(
-                                text = "Đốt mỡ, thon gọn một cách khoa học",
-                                fontSize = 9.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .offset(x = 80.dp, y = 20.dp)
-                                .padding(end = 40.dp)
-                                .size(27.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    if (isChecked) Color(0xFF4CAF50) else Color.Transparent
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isChecked) Color(0xFF4CAF50) else Color.Gray,
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .clickable { isChecked = !isChecked },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isChecked) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Checked",
-                                    tint = Color.White // Dấu tích trắng
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                // o giam can
-                Box() {
-                    if (isChecked1) {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                    Row(modifier = Modifier.offset(x = 50.dp, y = 10.dp)) {
-                        Column() {
-                            Text(
-                                text = "Giảm cân",
-                                fontSize = 15.sp,
-                                color = Color.Black,
-                                modifier = Modifier.offset(x = 10.dp)
-                            )
-                            Text(
-                                text = "Phát triển cơ bắp, tăng cân lành mạnh",
-                                fontSize = 9.sp,
-                                color = Color.Black
-                            )
-                        }
+                val goals = listOf(
+                    "Ăn uống lành mạnh",
+                    "Giảm cân",
+                    "Tăng cơ / Tăng cân",
+                    "Giữ dáng / Duy trì sức khỏe"
+                )
 
-                        Box(
-                            modifier = Modifier
-                                .offset(x = 75.dp, y = 20.dp)
-                                .size(27.dp) // Kích thước ô
-                                .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                .background(
-                                    if (isChecked1) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isChecked1) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .clickable { isChecked1 = !isChecked1 }, // Khi nhấn thì đổi trạng thái
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isChecked1) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Checked",
-                                    tint = Color.White // Dấu tích trắng
-                                )
-                            }
-                        }
+                goals.forEach { goal ->
+                    GoalOption(goal, selectedGoal == goal) {
+                        selectedGoal = goal
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                Spacer(modifier = Modifier.height(10.dp))
-                // o tang co, tang can
-                Box() {
-                    if (isChecked2) {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                    Row(modifier = Modifier.offset(x = 50.dp, y = 10.dp)) {
-                        Column() {
-                            Text(
-                                text = "Tăng cơ / Tăng cân",
-                                fontSize = 15.sp,
-                                color = Color.Black,
-                                modifier = Modifier.offset(x = 10.dp)
-                            )
-                            Text(
-                                text = "Cân bằng tập luyện và dinh dưỡng luôn khỏe mạnh",
-                                fontSize = 9.sp,
-                                color = Color.Black
-                            )
-                        }
 
-                        Box(
-                            modifier = Modifier
-                                .offset(x = 20.dp, y = 20.dp)
-                                .size(27.dp) // Kích thước ô
-                                .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                .background(
-                                    if (isChecked2) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isChecked2) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .clickable { isChecked2 = !isChecked2 }, // Khi nhấn thì đổi trạng thái
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isChecked2) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Checked",
-                                    tint = Color.White // Dấu tích trắng
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                //o giu dang va duy tri suc khoe
-                Box() {
-                    if (isChecked3) {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2_2_),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.khungnutbam2),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height(90.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                    Row(modifier = Modifier.offset(x = 50.dp, y = 10.dp)) {
-                        Column() {
-                            Text(
-                                text = "Giữ dáng / Duy trì sức khỏe",
-                                fontSize = 15.sp,
-                                color = Color.Black,
-                                modifier = Modifier.offset(x = 10.dp)
-                            )
-                            Text(
-                                text = "Xây dựng thói quen ăn uống khoa học và bền vững",
-                                fontSize = 9.sp,
-                                color = Color.Black
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .offset(x = 20.dp, y = 20.dp)
-                                .size(27.dp) // Kích thước ô
-                                .clip(RoundedCornerShape(6.dp)) // Bo góc nhẹ
-                                .background(
-                                    if (isChecked3) Color(0xFF4CAF50) else Color.Transparent // xanh lá khi chọn, trong suốt khi chưa
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = if (isChecked3) Color(0xFF4CAF50) else Color.Gray, // viền xanh khi chọn
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .clickable { isChecked3 = !isChecked3 }, // Khi nhấn thì đổi trạng thái
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isChecked3) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Checked",
-                                    tint = Color.White // Dấu tích trắng
-                                )
-                            }
-                        }
-                    }
-                }
                 Spacer(modifier = Modifier.height(28.dp))
                 Text(
                     text = "Quay lại",
@@ -384,7 +174,7 @@ fun TargetScreen(
                     .fillMaxSize()
 
             ) {
-                if (isChecked or isChecked1 or isChecked2 or isChecked3 == false) {
+                if (selectedGoal.isEmpty()) {
                     Text(
                         text = "Tiếp tục",
                         style = MaterialTheme.typography.headlineSmall,
@@ -395,14 +185,14 @@ fun TargetScreen(
                 } else {
                     Button(
                         onClick = {
-                            onNextClicked() // <-- THAY ĐỔI 2: Gọi onNextClicked
+                            viewModel.saveGoal(selectedGoal)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // xanh dương
                         shape = RoundedCornerShape(8.dp), // bo nhẹ góc
                         modifier = Modifier
                             .fillMaxWidth(0.95f)
                             .height(48.dp)
-                            .shadow(4.dp, RoundedCornerShape(8.dp)) // bóng mờ nhẹ
+                            .shadow(4.dp, RoundedCornerShape(8.dp))
                     ) {
                         Text(
                             text = "Tiếp tục",
@@ -414,9 +204,68 @@ fun TargetScreen(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
+@Composable
+fun GoalOption(goal: String, isSelected: Boolean, onClick: () -> Unit) {
+    val description = when (goal) {
+        "Ăn uống lành mạnh" -> "Đốt mỡ, thon gọn một cách khoa học"
+        "Giảm cân" -> "Phát triển cơ bắp, tăng cân lành mạnh"
+        "Tăng cơ / Tăng cân" -> "Cân bằng tập luyện và dinh dưỡng luôn khỏe mạnh"
+        "Giữ dáng / Duy trì sức khỏe" -> "Xây dựng thói quen ăn uống khoa học và bền vững"
+        else -> ""
+    }
 
+    Box(modifier = Modifier.clickable(onClick = onClick)) {
+        Image(
+            painter = painterResource(id = if (isSelected) R.drawable.khungnutbam2_2_ else R.drawable.khungnutbam2),
+            contentDescription = null,
+            modifier = Modifier
+                .height(90.dp)
+                .fillMaxWidth()
+        )
+        Row(
+            modifier = Modifier.offset(x = 50.dp, y = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = goal,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    modifier = Modifier.offset(x = 10.dp)
+                )
+                Text(
+                    text = description,
+                    fontSize = 9.sp,
+                    color = Color.Black
+                )
+            }
 
+            Box(
+                modifier = Modifier
+                    .padding(end = 40.dp)
+                    .size(27.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(
+                        if (isSelected) Color(0xFF4CAF50) else Color.Transparent
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = if (isSelected) Color(0xFF4CAF50) else Color.Gray,
+                        shape = RoundedCornerShape(6.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Checked",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}

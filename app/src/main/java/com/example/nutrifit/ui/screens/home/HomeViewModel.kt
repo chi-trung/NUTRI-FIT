@@ -27,13 +27,13 @@ class HomeViewModel : ViewModel() {
             if (firebaseUser != null) {
                 val result = userRepository.getUser(firebaseUser.uid)
                 if (result.isSuccess) {
-                    _userState.value = UserState.Success(result.getOrNull())
+                    result.getOrNull()?.let {
+                        _userState.value = UserState.Success(it)
+                    }
                 } else {
                     _userState.value = UserState.Error(result.exceptionOrNull()?.message ?: "Failed to fetch user data.")
                 }
             } else {
-                // User is not logged in, you can decide what to do.
-                // For now, we'll show an error or a generic state.
                 _userState.value = UserState.Error("No user logged in.")
             }
         }
@@ -42,6 +42,6 @@ class HomeViewModel : ViewModel() {
 
 sealed class UserState {
     object Loading : UserState()
-    data class Success(val user: User?) : UserState()
+    data class Success(val user: User) : UserState()
     data class Error(val message: String) : UserState()
 }

@@ -7,5 +7,6 @@ data class User(
     val height: String? = null,
     val weight: String? = null,
     val age: String? = null,
-    val gender: String? = null
+    val gender: String? = null,
+    val goal: String? = null // Thêm trường mục tiêu
 )

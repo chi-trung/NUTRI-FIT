@@ -108,7 +108,7 @@ fun RegisterScreen(
             }
             is RegistrationState.Error -> {
                 isLoading = false
-                Toast.makeText(context, "Đăng ký thất bại: ${'$'}{state.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Đăng ký thất bại: ${state.message}", Toast.LENGTH_SHORT).show()
             }
             is RegistrationState.Loading -> {
                 isLoading = true
@@ -119,7 +119,6 @@ fun RegisterScreen(
         }
     }
 
-    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -164,8 +163,6 @@ fun RegisterScreen(
                     LogoSection()
                     Spacer(modifier = Modifier.height(20.dp))
                     RegisterForm(
-                        name = name,
-                        onNameChange = { name = it },
                         email = email,
                         onEmailChange = { email = it },
                         password = password,
@@ -176,10 +173,6 @@ fun RegisterScreen(
                         onRememberMeChange = { rememberMe = it },
                         focusManager = focusManager,
                         onRegisterClick = {
-                            if (name.isBlank()) {
-                                Toast.makeText(context, "Tên không được bỏ trống", Toast.LENGTH_SHORT).show()
-                                return@RegisterForm
-                            }
                             if (email.isBlank() || !email.contains("@")) {
                                 Toast.makeText(context, "Email không hợp lệ", Toast.LENGTH_SHORT).show()
                                 return@RegisterForm
@@ -193,7 +186,7 @@ fun RegisterScreen(
                                 return@RegisterForm
                             }
                             // Gọi ViewModel để xử lý logic
-                            registerViewModel.registerWithEmailAndPassword(email, password, name)
+                            registerViewModel.registerWithEmailAndPassword(email, password)
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -290,8 +283,6 @@ fun LogoSection() {
 
 @Composable
 fun RegisterForm(
-    name: String,
-    onNameChange: (String) -> Unit,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
@@ -304,16 +295,6 @@ fun RegisterForm(
     onRegisterClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Tên", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
-        CustomTextField(
-            value = name,
-            onValueChange = onNameChange,
-            placeholder = "Nhập tên của bạn",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            focusManager = focusManager
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
         Text(text = "Email", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
         CustomTextField(
             value = email,

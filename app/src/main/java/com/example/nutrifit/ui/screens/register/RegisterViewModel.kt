@@ -19,7 +19,7 @@ class RegisterViewModel : ViewModel() {
     private val _registrationState = MutableStateFlow<RegistrationState>(RegistrationState.Idle)
     val registrationState: StateFlow<RegistrationState> = _registrationState
 
-    fun registerWithEmailAndPassword(email: String, password: String, name: String) {
+    fun registerWithEmailAndPassword(email: String, password: String) {
         viewModelScope.launch {
             _registrationState.value = RegistrationState.Loading
             try {
@@ -28,11 +28,10 @@ class RegisterViewModel : ViewModel() {
                 val firebaseUser = authResult.user
 
                 if (firebaseUser != null) {
-                    // Step 2: Create a User object
+                    // Step 2: Create a User object with only the essential information
                     val newUser = User(
                         id = firebaseUser.uid,
-                        email = email,
-                        name = name // Assuming you'll add a name field
+                        email = email
                     )
 
                     // Step 3: Save the user to Firestore
