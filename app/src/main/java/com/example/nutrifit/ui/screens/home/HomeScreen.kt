@@ -140,12 +140,16 @@ fun HomeScreen(navController: NavController) {
                 }
             }
             // dong chu "chao ban!", co the thay doi thanh "chao (username)"
-            item{
+            item {
                 //khoang cach voi thanh phan o tren
                 Spacer(modifier = Modifier.height(25.dp))
-                // tao column de can le trai
-                Column(
-                    modifier = Modifier.fillMaxWidth()
+                // tao row de can le trai
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val greeting = when (val state = userState) {
                         is UserState.Success -> "Chào ${state.user.name}!"
@@ -155,10 +159,22 @@ fun HomeScreen(navController: NavController) {
                         text = greeting,
                         color = Color.Black,
                         fontSize = 20.sp,
-                        modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(start = 25.dp)
                     )
+                    Button(
+                        onClick = { navController.navigate("schedule") },
+                        modifier = Modifier
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF293BB1)
+                        )
+                    ) {
+                        Text(
+                            "xem lịch",
+                            fontSize = 13.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -221,23 +237,6 @@ fun HomeScreen(navController: NavController) {
                                         text = "Mục tiêu: 3000 calo/ngày",
                                         fontSize = 11.sp,
                                         color = Color.Gray,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Spacer(modifier = Modifier.weight(1f))
-                                Button(
-                                    onClick = { navController.navigate("schedule")},
-                                    modifier = Modifier
-                                        .height(50.dp)
-                                        .padding(top = 10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF293BB1)
-                                    )
-                                ) {
-                                    Text(
-                                        "xem lịch",
-                                        fontSize = 13.sp,
-                                        color = Color.White,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1195,6 +1194,10 @@ fun HomeScreen(navController: NavController) {
                             }
 
                         }
+
+
+
+
 
 
 
