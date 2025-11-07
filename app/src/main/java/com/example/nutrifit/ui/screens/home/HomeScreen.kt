@@ -71,7 +71,6 @@ fun HomeScreen(navController: NavController) {
     val userState by homeViewModel.userState.collectAsState()
     // Hai biến state riêng biệt
     var selectedMeal by remember { mutableStateOf("Sáng") }
-    var selectedGoal by remember { mutableStateOf("Tăng cơ") }
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -207,8 +206,12 @@ fun HomeScreen(navController: NavController) {
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column() {
+                                    val userGoal = when (val state = userState) {
+                                        is UserState.Success -> state.user.goal ?: "Chưa có mục tiêu"
+                                        else -> "Tăng cơ"
+                                    }
                                     Text(
-                                        text = "Mục tiêu: Tăng cơ",
+                                        text = "Mục tiêu: $userGoal",
                                         fontSize = 13.sp,
                                         color = Color.Black,
                                         fontWeight = FontWeight.Bold
@@ -619,9 +622,11 @@ fun HomeScreen(navController: NavController) {
 
             // dieu kien hien thi cac bua an
             item {
-                // Điều kiện hiển thị (Sáng và Tăng cơ)
-                if (selectedMeal == "Sáng" && selectedGoal == "Tăng cơ") {
-
+                val showMeals = when (val state = userState) {
+                    is UserState.Success -> selectedMeal == "Sáng" && state.user.goal == "Tăng cơ"
+                    else -> false
+                }
+                if (showMeals) {
                     // khung bua an
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
