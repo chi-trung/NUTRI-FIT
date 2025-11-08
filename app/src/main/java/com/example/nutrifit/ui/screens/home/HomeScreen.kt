@@ -84,7 +84,7 @@ fun HomeScreen(navController: NavController) {
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            item {
+            item { 
                 // khung nutri fit va avt
                 Box() {
                     Image(
@@ -140,16 +140,12 @@ fun HomeScreen(navController: NavController) {
                 }
             }
             // dong chu "chao ban!", co the thay doi thanh "chao (username)"
-            item {
+            item{
                 //khoang cach voi thanh phan o tren
                 Spacer(modifier = Modifier.height(25.dp))
-                // tao row de can le trai
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 25.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // tao column de can le trai
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     val greeting = when (val state = userState) {
                         is UserState.Success -> "Chào ${state.user.name}!"
@@ -159,22 +155,10 @@ fun HomeScreen(navController: NavController) {
                         text = greeting,
                         color = Color.Black,
                         fontSize = 20.sp,
-                    )
-                    Button(
-                        onClick = { navController.navigate("schedule") },
                         modifier = Modifier
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF293BB1)
-                        )
-                    ) {
-                        Text(
-                            "xem lịch",
-                            fontSize = 13.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                            .align(Alignment.Start)
+                            .padding(start = 25.dp)
+                    )
                 }
             }
 
@@ -197,7 +181,8 @@ fun HomeScreen(navController: NavController) {
                         Column(modifier = Modifier.fillMaxWidth()
                             .padding(top = 20.dp, start = 20.dp, end = 20.dp)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box() {
                                     Image(
@@ -221,22 +206,47 @@ fun HomeScreen(navController: NavController) {
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Column() {
-                                    val userGoal = when (val state = userState) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    val userGoalText = when (val state = userState) {
                                         is UserState.Success -> state.user.goal ?: "Chưa có mục tiêu"
-                                        else -> "Tăng cơ"
+                                        else -> "Chưa có mục tiêu"
                                     }
                                     Text(
-                                        text = "Mục tiêu: $userGoal",
+                                        text = "Mục tiêu: $userGoalText",
                                         fontSize = 13.sp,
                                         color = Color.Black,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 2
                                     )
                                     Spacer(modifier = Modifier.height(7.dp))
+
+                                    val calorieGoalText = when (val state = userState) {
+                                        is UserState.Success -> state.user.calorieGoal?.toString() ?: "..."
+                                        else -> "..."
+                                    }
+
                                     Text(
-                                        text = "Mục tiêu: 3000 calo/ngày",
+                                        text = "Mục tiêu: $calorieGoalText calo/ngày",
                                         fontSize = 11.sp,
                                         color = Color.Gray,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Button(
+                                    onClick = { navController.navigate("schedule")},
+                                    modifier = Modifier
+                                        .height(50.dp)
+                                        .padding(start = 8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF293BB1)
+                                    )
+                                ) {
+                                    Text(
+                                        "xem lịch",
+                                        fontSize = 13.sp,
+                                        color = Color.White,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1194,10 +1204,6 @@ fun HomeScreen(navController: NavController) {
                             }
 
                         }
-
-
-
-
 
 
 

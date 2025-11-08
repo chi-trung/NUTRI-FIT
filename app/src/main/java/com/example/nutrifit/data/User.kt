@@ -8,5 +8,6 @@ data class User(
     val weight: String? = null,
     val age: String? = null,
     val gender: String? = null,
-    val goal: String? = null // Thêm trường mục tiêu
+    val goal: String? = null,
+    val calorieGoal: Int? = null // Thêm trường mục tiêu calo
 )
