@@ -69,6 +69,8 @@ fun HomeScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val homeViewModel: HomeViewModel = viewModel()
     val userState by homeViewModel.userState.collectAsState()
+    val dailyIntakeState by homeViewModel.dailyIntakeState.collectAsState()
+
     // Hai biến state riêng biệt
     var selectedMeal by remember { mutableStateOf("Sáng") }
 
@@ -251,8 +253,19 @@ fun HomeScreen(navController: NavController) {
                                     )
                                 }
                             }
-                            // Progress value (0f -> 1f)
-                            val progress = 0.65f
+
+                            val (caloriesConsumed, calorieGoal) = when {
+                                userState is UserState.Success && dailyIntakeState is DailyIntakeState.Success -> {
+                                    val user = (userState as UserState.Success).user
+                                    val intake = (dailyIntakeState as DailyIntakeState.Success).intake
+                                    (intake?.totalCalories ?: 0) to (user.calorieGoal ?: 2000)
+                                }
+                                else -> 0 to 2000 // Default values
+                            }
+
+                            val progress = if (calorieGoal > 0) (caloriesConsumed.toFloat() / calorieGoal.toFloat()).coerceIn(0f, 1f) else 0f
+                            val progressPercentage = (progress * 100).toInt()
+
                             val backgroundColor = Color(0xFFD9D9D9)
                             val progressBarColor = Color(0xFF4CAF50)
                             Spacer(modifier = Modifier .height(20.dp))
@@ -274,14 +287,14 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier .height(20.dp))
                             Row() {
                                 Text(
-                                    text = "Đã đạt: 1950",
+                                    text = "Đã đạt: $caloriesConsumed",
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "65%",
+                                    text = "$progressPercentage%",
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
@@ -632,7 +645,7 @@ fun HomeScreen(navController: NavController) {
             // dieu kien hien thi cac bua an
             item {
                 val showMeals = when (val state = userState) {
-                    is UserState.Success -> selectedMeal == "Sáng" && state.user.goal == "Tăng cơ"
+                    is UserState.Success -> selectedMeal == "Sáng" && state.user.goal == "Tăng cơ / Tăng cân"
                     else -> false
                 }
                 if (showMeals) {

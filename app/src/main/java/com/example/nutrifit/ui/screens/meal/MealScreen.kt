@@ -24,12 +24,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.nutrifit.R
 
+// Data classes remain the same, but ensure calories is Int
 data class Meal(
     val id: Int,
     val name: String,
     val description: String,
     val imageRes: Int,
-    val calories: String,
+    val calories: Int, // Keep as Int
     val time: String,
     val category: String
 )
@@ -43,10 +44,12 @@ data class FoodCategory(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MealScreen(navController: NavController) {
+
+    // Data is still static for now
     val featuredMeals = listOf(
-        Meal(1, "Khoai lang & Ức gà", "Món ăn được thích nhiều nhất", R.drawable.klug, "350 kcal", "15 phút", "Main"),
-        Meal(2, "Salmon & Broccoli", "Món ăn phù hợp với bạn", R.drawable.stbo, "420 kcal", "20 phút", "Main"),
-        Meal(3, "Sinh tố Xoài", "Món uống bổ dưỡng", R.drawable.stxoai, "180 kcal", "5 phút", "Drink")
+        Meal(1, "Khoai lang & Ức gà", "Món ăn được thích nhiều nhất", R.drawable.klug, 350, "15 phút", "Main"),
+        Meal(2, "Salmon & Broccoli", "Món ăn phù hợp với bạn", R.drawable.stbo, 420, "20 phút", "Main"),
+        Meal(3, "Sinh tố Xoài", "Món uống bổ dưỡng", R.drawable.stxoai, 180, "5 phút", "Drink")
     )
 
     val categories = listOf(
@@ -59,16 +62,15 @@ fun MealScreen(navController: NavController) {
     )
 
     val allMeals = listOf(
-        Meal(1, "Khoai lang & Ức gà", "Bữa ăn giàu protein", R.drawable.klug, "350 kcal", "15 phút", "Main"),
-        Meal(2, "Salmon & Broccoli", "Omega-3 và chất xơ", R.drawable.stbo, "420 kcal", "20 phút", "Main"),
-        Meal(3, "Salad đậu", "Protein thực vật", R.drawable.stdau, "280 kcal", "10 phút", "Main"),
-        Meal(4, "Táo & Hạnh nhân", "Ăn nhẹ lành mạnh", R.drawable.sttao, "200 kcal", "5 phút", "Snack"),
-        Meal(5, "Sinh tố Xoài", "Vitamin và khoáng chất", R.drawable.stxoai, "180 kcal", "5 phút", "Drink"),
-        Meal(6, "Sinh tố Dâu", "Chất chống oxy hóa", R.drawable.stdau, "150 kcal", "5 phút", "Drink"),
-        Meal(7, "Sinh tố Chuối", "Năng lượng tự nhiên", R.drawable.sttao, "200 kcal", "5 phút", "Drink")
+        Meal(1, "Khoai lang & Ức gà", "Bữa ăn giàu protein", R.drawable.klug, 350, "15 phút", "Main"),
+        Meal(2, "Salmon & Broccoli", "Omega-3 và chất xơ", R.drawable.stbo, 420, "20 phút", "Main"),
+        Meal(3, "Salad đậu", "Protein thực vật", R.drawable.stdau, 280, "10 phút", "Main"),
+        Meal(4, "Táo & Hạnh nhân", "Ăn nhẹ lành mạnh", R.drawable.sttao, 200, "5 phút", "Snack"),
+        Meal(5, "Sinh tố Xoài", "Vitamin và khoáng chất", R.drawable.stxoai, 180, "5 phút", "Drink"),
+        Meal(6, "Sinh tố Dâu", "Chất chống oxy hóa", R.drawable.stdau, 150, "5 phút", "Drink"),
+        Meal(7, "Sinh tố Chuối", "Năng lượng tự nhiên", R.drawable.sttao, 200, "5 phút", "Drink")
     )
 
-    // ✅ State cho lọc & tìm kiếm
     val selectedCategory = remember { mutableStateOf("Tất cả") }
     val searchQuery = remember { mutableStateOf("") }
     val pagerState = rememberPagerState(pageCount = { featuredMeals.size })
@@ -95,7 +97,6 @@ fun MealScreen(navController: NavController) {
             )
         }
 
-        // ✅ Thanh tìm kiếm hoạt động thật
         item {
             OutlinedTextField(
                 value = searchQuery.value,
@@ -125,7 +126,6 @@ fun MealScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Phần Món nổi bật
         item {
             HorizontalPager(state = pagerState) { page ->
                 FeaturedMealCard(meal = featuredMeals[page])
@@ -151,7 +151,6 @@ fun MealScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Loại thức ăn
         item {
             Row(
                 modifier = Modifier
@@ -206,7 +205,6 @@ fun MealScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Danh mục
         item {
             LazyRow(
                 modifier = Modifier
@@ -225,7 +223,6 @@ fun MealScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // ✅ Danh sách món ăn được lọc theo category + tìm kiếm
         item {
             Column(
                 modifier = Modifier
@@ -264,6 +261,7 @@ fun MealScreen(navController: NavController) {
                     ) {
                         items(filteredMeals) { meal ->
                             MealCard(meal = meal) {
+                                // Navigate to detail screen on click
                                 navController.navigate("mealdetail/${meal.id}")
                             }
                         }
@@ -333,7 +331,7 @@ fun FeaturedMealCard(meal: Meal) {
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = meal.calories, fontSize = 12.sp, color = Color.White)
+                    Text(text = "${meal.calories} kcal", fontSize = 12.sp, color = Color.White)
                 }
             }
             Box(
@@ -393,8 +391,8 @@ fun FoodCategoryItem(category: FoodCategory, isSelected: Boolean, onClick: () ->
 fun MealCard(meal: Meal, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .width(190.dp) // ✅ tăng chiều rộng
-            .height(240.dp) // ✅ tăng chiều cao
+            .width(190.dp)
+            .height(240.dp)
             .clickable { onClick() }
             .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp))
             .background(Color.White, RoundedCornerShape(14.dp))
@@ -409,7 +407,7 @@ fun MealCard(meal: Meal, onClick: () -> Unit) {
                 contentDescription = meal.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp) // ✅ ảnh to hơn
+                    .height(130.dp)
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
@@ -428,7 +426,7 @@ fun MealCard(meal: Meal, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = meal.calories,
+                text = "${meal.calories} kcal",
                 fontSize = 13.sp,
                 color = Color(0xFF4CAF50),
                 fontWeight = FontWeight.Medium

@@ -1,5 +1,6 @@
 package com.example.nutrifit.ui.screens.meal
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,6 +16,9 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,20 +28,60 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutrifit.R
 import androidx.compose.foundation.BorderStroke
 
+// This is a temporary solution. In a real app, this data should come from a repository/database.
+val allMealsForDetail = listOf(
+    Meal(1, "Khoai lang & Ức gà", "Bữa ăn giàu protein", R.drawable.klug, 350, "15 phút", "Main"),
+    Meal(2, "Salmon & Broccoli", "Omega-3 và chất xơ", R.drawable.stbo, 420, "20 phút", "Main"),
+    Meal(3, "Salad đậu", "Protein thực vật", R.drawable.stdau, 280, "10 phút", "Main"),
+    Meal(4, "Táo & Hạnh nhân", "Ăn nhẹ lành mạnh", R.drawable.sttao, 200, "5 phút", "Snack"),
+    Meal(5, "Sinh tố Xoài", "Vitamin và khoáng chất", R.drawable.stxoai, 180, "5 phút", "Drink"),
+    Meal(6, "Sinh tố Dâu", "Chất chống oxy hóa", R.drawable.stdau, 150, "5 phút", "Drink"),
+    Meal(7, "Sinh tố Chuối", "Năng lượng tự nhiên", R.drawable.sttao, 200, "5 phút", "Drink")
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealDetailScreen(mealId: Int, navController: NavController?) {
+fun MealDetailScreen(mealId: Int, navController: NavController) {
     val scrollState = rememberScrollState()
+    val mealViewModel: MealViewModel = viewModel()
+    val context = LocalContext.current
+
+    // Find the meal by its ID. In a real app, you'd fetch this from a ViewModel.
+    val meal = allMealsForDetail.find { it.id == mealId }
+
+    // Handle state for adding meal
+    val addMealState by mealViewModel.addMealState.collectAsState()
+    LaunchedEffect(addMealState) {
+        when (val state = addMealState) {
+            is AddMealState.Success -> {
+                Toast.makeText(context, "Đã thêm '${meal?.name}' vào bữa ăn!", Toast.LENGTH_SHORT).show()
+            }
+            is AddMealState.Error -> {
+                Toast.makeText(context, "Lỗi: ${state.message}", Toast.LENGTH_SHORT).show()
+            }
+            else -> Unit
+        }
+    }
+
+    if (meal == null) {
+        // Show an error or a loading state if the meal is not found
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Không tìm thấy món ăn!")
+        }
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -51,8 +95,8 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
                 .height(250.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.meal_khoai_lang_uc_ga),
-                contentDescription = "Khoai lang & ức gà",
+                painter = painterResource(id = meal.imageRes), // Dynamic image
+                contentDescription = meal.name,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(bottomStart = 30.dp, bottomEnd = 30.dp)),
@@ -60,7 +104,7 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
             )
 
             Card(
-                onClick = { navController?.popBackStack() },
+                onClick = { navController.popBackStack() },
                 modifier = Modifier
                     .padding(start = 16.dp, end = 16.dp)
                     .offset(y = 25.dp)
@@ -103,7 +147,7 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Khoai lang & Ức gà",
+                text = meal.name, // Dynamic name
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1A1A1A),
@@ -132,7 +176,7 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             NutritionCard(
-                title = "110 kcal",
+                title = "${meal.calories} kcal", // Dynamic calories
                 subtitle = "Năng lượng",
                 color = Color(0xFFFFE9CC),
                 textColor = Color(0xFF333333),
@@ -142,7 +186,7 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
             )
 
             NutritionCard(
-                title = "30 phút",
+                title = meal.time, // Dynamic time
                 subtitle = "Thời gian",
                 color = Color(0xFFF2E7FB),
                 textColor = Color(0xFF333333),
@@ -207,10 +251,40 @@ fun MealDetailScreen(mealId: Int, navController: NavController?) {
         CookingInstructionsSection()
 
         Spacer(modifier = Modifier.height(24.dp))
+        
+        // New Button to add meal
+        Button(
+            onClick = {
+                mealViewModel.addMealToIntake(meal.calories)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .padding(horizontal = 20.dp)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(10.dp),
+                    clip = false
+                ),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF4CAF50) // Green color for positive action
+            )
+        ) {
+            Text(
+                text = "Thêm vào bữa ăn hôm nay",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+        }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
-                navController?.popBackStack()
+                navController.popBackStack()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -551,6 +625,7 @@ fun NumberedInstruction(number: Int, title: String, description: String) {
 @Composable
 fun MealDetailScreenPreview() {
     MaterialTheme {
-        MealDetailScreen(mealId = 1, navController = null)
+        // Can't use NavController in preview
+        // MealDetailScreen(mealId = 1, navController = null)
     }
 }
