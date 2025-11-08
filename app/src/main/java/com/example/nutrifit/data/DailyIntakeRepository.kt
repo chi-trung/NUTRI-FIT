@@ -1,5 +1,6 @@
 package com.example.nutrifit.data
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.util.Date
@@ -25,36 +26,87 @@ class DailyIntakeRepository {
                 .await()
 
             val document = query.documents.firstOrNull()
-            val dailyIntake = document?.toObject(DailyIntake::class.java)?.copy(id = document.id)
+            if (document == null) {
+                return Result.success(null)
+            }
+            
+            // Manually deserialize due to nested custom object
+            val id = document.id
+            val docUserId = document.getString("userId") ?: ""
+            val docDate = document.getDate("date")
+            val consumedMealsList = document.get("consumedMeals") as? List<HashMap<String, Any>> ?: emptyList()
+
+            val meals = consumedMealsList.mapNotNull { mealMap ->
+                // Firestore converts Int to Long, so we need to handle that
+                val mealCalories = (mealMap["calories"] as? Long)?.toInt() ?: 0
+                ConsumedMeal(
+                    id = mealMap["id"] as? String ?: "",
+                    mealId = (mealMap["mealId"] as? Long)?.toInt() ?: 0,
+                    name = mealMap["name"] as? String ?: "",
+                    calories = mealCalories,
+                    mealType = mealMap["mealType"] as? String ?: "",
+                    consumedAt = (mealMap["consumedAt"] as? com.google.firebase.Timestamp)?.toDate() ?: Date()
+                )
+            }
+
+            val dailyIntake = DailyIntake(
+                id = id,
+                userId = docUserId,
+                date = docDate,
+                consumedMeals = meals
+            )
+
             Result.success(dailyIntake)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun addOrUpdateDailyIntake(userId: String, caloriesToAdd: Int): Result<Unit> {
+    suspend fun addConsumedMeal(userId: String, meal: ConsumedMeal): Result<Unit> {
         return try {
             val today = Date()
             val existingIntakeResult = getDailyIntake(userId, today)
-            
+
             if (existingIntakeResult.isSuccess) {
                 val existingIntake = existingIntakeResult.getOrNull()
-                if (existingIntake != null) {
-                    // Update existing
-                    val newTotal = existingIntake.totalCalories + caloriesToAdd
-                    db.document(existingIntake.id).update("totalCalories", newTotal).await()
+                if (existingIntake != null && existingIntake.id.isNotEmpty()) {
+                    // Document exists, update it by adding the new meal to the array.
+                    db.document(existingIntake.id).update("consumedMeals", FieldValue.arrayUnion(meal)).await()
                 } else {
-                    // Create new
+                    // No document for today, create a new one.
                     val newIntake = DailyIntake(
                         userId = userId,
                         date = today,
-                        totalCalories = caloriesToAdd
+                        consumedMeals = listOf(meal)
                     )
                     db.add(newIntake).await()
                 }
                 Result.success(Unit)
             } else {
-                Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to get daily intake"))
+                Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to check for existing intake."))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    // We will need this function later to remove meals
+    suspend fun removeConsumedMeal(userId: String, meal: ConsumedMeal): Result<Unit> {
+        return try {
+            val today = Date()
+            val existingIntakeResult = getDailyIntake(userId, today)
+
+            if (existingIntakeResult.isSuccess) {
+                val existingIntake = existingIntakeResult.getOrNull()
+                if (existingIntake != null && existingIntake.id.isNotEmpty()) {
+                    // Document exists, remove the meal from the array.
+                    db.document(existingIntake.id).update("consumedMeals", FieldValue.arrayRemove(meal)).await()
+                    Result.success(Unit)
+                } else {
+                     Result.failure(Exception("No intake document found for today to remove meal from."))
+                }
+            } else {
+                 Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to check for existing intake."))
             }
         } catch (e: Exception) {
             Result.failure(e)

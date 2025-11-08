@@ -67,9 +67,11 @@ fun MealDetailScreen(mealId: Int, navController: NavController) {
         when (val state = addMealState) {
             is AddMealState.Success -> {
                 Toast.makeText(context, "Đã thêm '${meal?.name}' vào bữa ăn!", Toast.LENGTH_SHORT).show()
+                mealViewModel.resetAddMealState() // Reset state to avoid showing toast again
             }
             is AddMealState.Error -> {
                 Toast.makeText(context, "Lỗi: ${state.message}", Toast.LENGTH_SHORT).show()
+                mealViewModel.resetAddMealState()
             }
             else -> Unit
         }
@@ -255,7 +257,7 @@ fun MealDetailScreen(mealId: Int, navController: NavController) {
         // New Button to add meal
         Button(
             onClick = {
-                mealViewModel.addMealToIntake(meal.calories)
+                mealViewModel.addMealToIntake(meal, "Bữa ăn") // Corrected function call
             },
             modifier = Modifier
                 .fillMaxWidth()

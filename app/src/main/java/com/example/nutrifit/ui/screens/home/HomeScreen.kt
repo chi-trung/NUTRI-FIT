@@ -182,7 +182,7 @@ fun HomeScreen(navController: NavController) {
                         )
                         Column(modifier = Modifier.fillMaxWidth()
                             .padding(top = 20.dp, start = 20.dp, end = 20.dp)) {
-                            Row(
+                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -258,7 +258,7 @@ fun HomeScreen(navController: NavController) {
                                 userState is UserState.Success && dailyIntakeState is DailyIntakeState.Success -> {
                                     val user = (userState as UserState.Success).user
                                     val intake = (dailyIntakeState as DailyIntakeState.Success).intake
-                                    (intake?.totalCalories ?: 0) to (user.calorieGoal ?: 2000)
+                                    (intake?.getTotalCalories() ?: 0) to (user.calorieGoal ?: 2000)
                                 }
                                 else -> 0 to 2000 // Default values
                             }
@@ -645,7 +645,7 @@ fun HomeScreen(navController: NavController) {
             // dieu kien hien thi cac bua an
             item {
                 val showMeals = when (val state = userState) {
-                    is UserState.Success -> selectedMeal == "Sáng" && state.user.goal == "Tăng cơ / Tăng cân"
+                    is UserState.Success -> selectedMeal == "Sáng" && (state.user.goal == "Tăng cơ / Tăng cân" || state.user.goal == "Tăng cơ")
                     else -> false
                 }
                 if (showMeals) {

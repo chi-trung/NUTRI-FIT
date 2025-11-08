@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nutrifit.ui.components.BottomNavBar
+import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
 import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
 import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen2
 import com.example.nutrifit.ui.screens.home.HomeScreen
@@ -35,10 +36,11 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination: NavDestination? = backStackEntry?.destination
 
-    // Các route hiển thị BottomBar (giữ nguyên nếu NavRoutes.* là String)
+    // Các route hiển thị BottomBar
     val bottomBarRoutes = setOf(
         NavRoutes.Home,
         NavRoutes.Meal,
+        NavRoutes.DailyLog, // Add DailyLog to show bottom bar
         NavRoutes.Workout,
         NavRoutes.Map,
         NavRoutes.Setting,
@@ -54,7 +56,6 @@ fun AppNavHost() {
                     onNavigate = { route ->
                         if (route != currentDestination?.route) {
                             navController.navigate(route) {
-                                // popUpTo bằng route của startDestination nếu có, fallback về Home route
                                 val startRoute = navController.graph.findStartDestination().route ?: NavRoutes.Home
                                 popUpTo(startRoute) {
                                     saveState = true
@@ -71,6 +72,7 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = NavRoutes.Onboarding, // Onboarding
+            modifier = Modifier.padding(paddingValues)
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
@@ -192,6 +194,7 @@ fun AppNavHost() {
             // Bottom tabs - không có animation
             composable(NavRoutes.Home ) { HomeScreen(navController) }
             composable(NavRoutes.Meal) { MealScreen(navController) }
+            composable(NavRoutes.DailyLog) { DailyLogScreen(navController) } // Add this line
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
             composable("mealdetail/{mealId}") { backStackEntry ->
