@@ -37,6 +37,8 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
     private val _mealDetailState = MutableStateFlow<MealDetailState>(MealDetailState.Loading)
     val mealDetailState: StateFlow<MealDetailState> = _mealDetailState
 
+    private var allMeals: List<Meal> = emptyList()
+
     init {
         fetchAllMeals()
     }
@@ -62,11 +64,21 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
             _mealsState.value = MealsState.Loading
             mealRepository.getAllMeals().onSuccess { meals ->
                 val mappedMeals = mapMealImages(meals)
+                allMeals = mappedMeals // Cache the full list
                 _mealsState.value = MealsState.Success(mappedMeals)
             }.onFailure {
                 _mealsState.value = MealsState.Error(it.message ?: "Failed to fetch meals")
             }
         }
+    }
+
+    fun searchMeals(query: String) {
+        val filtered = if (query.isBlank()) {
+            allMeals
+        } else {
+            allMeals.filter { it.name.contains(query, ignoreCase = true) }
+        }
+        _mealsState.value = MealsState.Success(filtered)
     }
     
     private fun mapMealImages(meals: List<Meal>): List<Meal> {

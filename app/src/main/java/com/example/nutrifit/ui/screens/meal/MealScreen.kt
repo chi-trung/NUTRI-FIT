@@ -99,7 +99,10 @@ fun MealScreen(navController: NavController) {
         item {
             OutlinedTextField(
                 value = searchQuery.value,
-                onValueChange = { searchQuery.value = it },
+                onValueChange = { 
+                    searchQuery.value = it
+                    mealViewModel.searchMeals(it)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -226,7 +229,7 @@ fun MealScreen(navController: NavController) {
                         Text(selectedCategory.value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(bottom = 16.dp))
 
                         val filteredMeals = allMeals.filter { meal ->
-                            val matchCategory = when (selectedCategory.value) {
+                            when (selectedCategory.value) {
                                 "Tất cả" -> true
                                 "Sinh tố", "Nước uống" -> meal.category == "Drink"
                                 "Cơm" -> meal.category == "Main"
@@ -234,8 +237,6 @@ fun MealScreen(navController: NavController) {
                                 "Món nước" -> meal.category == "Soup"
                                 else -> meal.category.equals(selectedCategory.value, ignoreCase = true)
                             }
-                            val matchSearch = meal.name.contains(searchQuery.value, ignoreCase = true)
-                            matchCategory && matchSearch
                         }
 
                         if (filteredMeals.isEmpty()) {
