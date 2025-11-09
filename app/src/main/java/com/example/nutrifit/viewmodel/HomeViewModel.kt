@@ -3,86 +3,96 @@ package com.example.nutrifit.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nutrifit.data.model.MealSuggestion
-import com.example.nutrifit.data.model.TargetState
-import com.example.nutrifit.data.model.WorkoutSuggestion
-import com.example.nutrifit.data.repository.UserRepository
+import com.example.nutrifit.R
+import com.example.nutrifit.data.DailyIntakeRepository
+import com.example.nutrifit.data.MealRepository
+import com.example.nutrifit.data.UserRepository
+import com.example.nutrifit.ui.screens.meal.Meal
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = UserRepository(application)
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val userRepository: UserRepository = UserRepository()
+    private val dailyIntakeRepository: DailyIntakeRepository = DailyIntakeRepository()
+    private val mealRepository: MealRepository = MealRepository()
 
-    // State for target
-    private val _targetState = MutableStateFlow(TargetState("Tăng cơ", "Mục tiêu: 3000 calo/ngày", true))
-    val targetState: StateFlow<TargetState> = _targetState.asStateFlow()
+    private val _userState = MutableStateFlow<UserState>(UserState.Loading)
+    val userState: StateFlow<UserState> = _userState
 
-    // State for meal suggestions
-    private val _mealSuggestions = MutableStateFlow<List<MealSuggestion>>(emptyList())
-    val mealSuggestions: StateFlow<List<MealSuggestion>> = _mealSuggestions.asStateFlow()
+    private val _dailyIntakeState = MutableStateFlow<DailyIntakeState>(DailyIntakeState.Loading)
+    val dailyIntakeState: StateFlow<DailyIntakeState> = _dailyIntakeState
 
-    // State for workout suggestions
-    private val _workoutSuggestions = MutableStateFlow<List<WorkoutSuggestion>>(emptyList())
-    val workoutSuggestions: StateFlow<List<WorkoutSuggestion>> = _workoutSuggestions.asStateFlow()
-
-    // Selected meal and goal
-    private val _selectedMeal = MutableStateFlow("Sáng")
-    val selectedMeal: StateFlow<String> = _selectedMeal.asStateFlow()
-
-    private val _selectedGoal = MutableStateFlow("Tăng cơ")
-    val selectedGoal: StateFlow<String> = _selectedGoal.asStateFlow()
+    private val _suggestedMealsState = MutableStateFlow<MealsState>(MealsState.Loading)
+    val suggestedMealsState: StateFlow<MealsState> = _suggestedMealsState
 
     init {
-        loadTarget()
-        loadSuggestions()
+        fetchData()
     }
 
-    fun loadTarget() {
-        _targetState.value = repository.getTarget()
-    }
-
-    fun updateSelectedMeal(meal: String) {
-        _selectedMeal.value = meal
-        loadMealSuggestions()
-    }
-
-    fun updateSelectedGoal(goal: String) {
-        _selectedGoal.value = goal
-        loadMealSuggestions()
-        loadWorkoutSuggestions()
-    }
-
-    private fun loadMealSuggestions() {
+    fun fetchData() { // Made public to allow refresh
         viewModelScope.launch {
-            repository.getMealSuggestions(_selectedMeal.value, _selectedGoal.value)
-                .collectLatest { suggestions ->
-                    _mealSuggestions.value = suggestions
+            _userState.value = UserState.Loading
+            _dailyIntakeState.value = DailyIntakeState.Loading
+            _suggestedMealsState.value = MealsState.Loading
+
+            val firebaseUser = auth.currentUser
+            if (firebaseUser != null) {
+                // Fetch User Profile
+                userRepository.getUser(firebaseUser.uid).onSuccess { user ->
+                    if (user != null) {
+                        _userState.value = UserState.Success(user)
+                        user.goal?.let { fetchMealSuggestions(it) } // Fetch suggestions after getting user goal
+                    } else {
+                        _userState.value = UserState.Error("User data is null.")
+                    }
+                }.onFailure {
+                    _userState.value = UserState.Error(it.message ?: "Failed to fetch user data.")
                 }
+
+                // Fetch Daily Intake
+                dailyIntakeRepository.getDailyIntake(firebaseUser.uid, Date()).onSuccess { 
+                    _dailyIntakeState.value = DailyIntakeState.Success(it)
+                }.onFailure {
+                    _dailyIntakeState.value = DailyIntakeState.Error(it.message ?: "Failed to fetch daily intake.")
+                }
+
+            } else {
+                val error = "No user logged in."
+                _userState.value = UserState.Error(error)
+                _dailyIntakeState.value = DailyIntakeState.Error(error)
+                _suggestedMealsState.value = MealsState.Error(error)
+            }
         }
     }
 
-    private fun loadWorkoutSuggestions() {
+    private fun fetchMealSuggestions(goal: String) {
         viewModelScope.launch {
-            repository.getWorkoutSuggestions(_selectedGoal.value)
-                .collectLatest { suggestions ->
-                    _workoutSuggestions.value = suggestions
-                }
+             mealRepository.getMealsByGoal(goal).onSuccess { meals ->
+                 val mappedMeals = mapMealImages(meals)
+                _suggestedMealsState.value = MealsState.Success(mappedMeals)
+             }.onFailure {
+                 _suggestedMealsState.value = MealsState.Error(it.message ?: "Failed to fetch suggestions")
+             }
         }
     }
-
-    private fun loadSuggestions() {
-        loadMealSuggestions()
-        loadWorkoutSuggestions()
-    }
-
-    fun updateProgress(newCalories: Int) {
-        val current = _targetState.value
-        val newProgress = newCalories.toFloat() / current.caloriesGoal
-        _targetState.value = current.copy(currentCalories = newCalories, progress = newProgress)
-        repository.saveTarget(_targetState.value)
+    
+    private fun mapMealImages(meals: List<Meal>): List<Meal> {
+        val context = getApplication<Application>().applicationContext
+        return meals.map { meal ->
+            val imageResName = meal.imageRes // imageRes is a String
+            val imageIdentifier = if (imageResName.isNotEmpty()) {
+                 context.resources.getIdentifier(imageResName, "drawable", context.packageName)
+            } else { 0 }
+            
+            // Use a default placeholder if the resource is not found
+            val finalImageResId = if (imageIdentifier == 0) R.drawable.logo else imageIdentifier 
+            
+            meal.copy(imageResId = finalImageResId)
+        }
     }
 }

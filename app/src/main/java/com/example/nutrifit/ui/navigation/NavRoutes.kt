@@ -18,4 +18,5 @@ object NavRoutes {
     const val ForgotPw = "forgotpw"
     const val ForgotPw2 = "forgotpw2"
     const val Schedule = "schedule"
+    const val MealDetail = "mealdetail"
 }

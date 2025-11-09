@@ -197,7 +197,7 @@ fun AppNavHost() {
             composable(NavRoutes.DailyLog) { DailyLogScreen(navController) } // Add this line
             composable(NavRoutes.Workout) { WorkoutScreen() }
             composable(NavRoutes.Map) { MapScreen() }
-            composable("mealdetail/{mealId}") { backStackEntry ->
+            composable("${NavRoutes.MealDetail}/{mealId}") { backStackEntry ->
                 val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
                 MealDetailScreen(mealId = mealId, navController = navController)
             }
