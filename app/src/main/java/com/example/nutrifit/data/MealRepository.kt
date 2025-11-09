@@ -1,6 +1,5 @@
 package com.example.nutrifit.data
 
-import com.example.nutrifit.ui.screens.meal.Meal
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

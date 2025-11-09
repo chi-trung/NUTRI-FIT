@@ -25,30 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutrifit.R
+import com.example.nutrifit.data.FoodCategory
+import com.example.nutrifit.data.Meal
+import com.example.nutrifit.viewmodel.MealViewModel
 import com.example.nutrifit.viewmodel.MealsState
 
-// The single source of truth for the Meal data structure
-data class Meal(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val imageRes: String,      // Name of the image from Firestore (e.g., "klug")
-    var imageResId: Int = 0,   // Resolved drawable ID, defaults to 0
-    val calories: Int,
-    val time: String,
-    val category: String,
-    val protein: Int = 0,
-    val carbs: Int = 0,
-    val fat: Int = 0,
-    val difficulty: String = "Dễ",
-    val instructions: String = ""
-)
-
-data class FoodCategory(
-    val id: Int,
-    val name: String,
-    val iconRes: Int
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

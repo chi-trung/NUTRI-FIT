@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutrifit.R
+import com.example.nutrifit.data.Meal
 import com.example.nutrifit.viewmodel.AddMealState
+import com.example.nutrifit.viewmodel.MealDetailState
+import com.example.nutrifit.viewmodel.MealViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.navigation.compose.rememberNavController
 
