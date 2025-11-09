@@ -112,4 +112,24 @@ class DailyIntakeRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun clearAllConsumedMeals(userId: String, date: Date): Result<Unit> {
+        return try {
+            val existingIntakeResult = getDailyIntake(userId, date)
+
+            if (existingIntakeResult.isSuccess) {
+                val existingIntake = existingIntakeResult.getOrNull()
+                if (existingIntake != null && existingIntake.id.isNotEmpty()) {
+                    // Document exists, clear the consumedMeals array.
+                    db.document(existingIntake.id).update("consumedMeals", emptyList<ConsumedMeal>()).await()
+                }
+                // If no document exists, there's nothing to clear, so we can consider it a success.
+                Result.success(Unit)
+            } else {
+                Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to check for existing intake."))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -56,6 +56,22 @@ class DailyLogViewModel : ViewModel() {
             }
         }
     }
+
+    fun clearAllMeals() {
+        viewModelScope.launch {
+            val userId = auth.currentUser?.uid
+            if (userId == null) {
+                return@launch
+            }
+
+            val result = repository.clearAllConsumedMeals(userId, Date())
+            if (result.isSuccess) {
+                fetchDailyLog()
+            } else {
+                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to clear meals")
+            }
+        }
+    }
 }
 
 sealed class LogState {
