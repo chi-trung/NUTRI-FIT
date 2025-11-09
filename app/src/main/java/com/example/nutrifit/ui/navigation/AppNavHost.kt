@@ -1,5 +1,6 @@
 package com.example.nutrifit.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -19,15 +20,15 @@ import com.example.nutrifit.ui.screens.home.HomeScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen2
 import com.example.nutrifit.ui.screens.map.MapScreen
+import com.example.nutrifit.ui.screens.meal.MealDetailScreen
 import com.example.nutrifit.ui.screens.meal.MealScreen
 import com.example.nutrifit.ui.screens.onboarding.OnboardingScreen
 import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
-import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
-import com.example.nutrifit.ui.screens.workout.WorkoutScreen
-import com.example.nutrifit.ui.screens.meal.MealDetailScreen
 import com.example.nutrifit.ui.screens.setting.SettingScreen // dang làm setting
+import com.example.nutrifit.ui.screens.target.TargetScreen
+import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 
 
 @Composable
@@ -43,8 +44,7 @@ fun AppNavHost() {
         NavRoutes.DailyLog, // Add DailyLog to show bottom bar
         NavRoutes.Workout,
         NavRoutes.Map,
-        NavRoutes.Setting,
-        // NavRoutes.Profile
+        // NavRoutes.Profile // Setting cũng không nên có bottom bar
     )
     val showBottomBar = currentDestination?.route in bottomBarRoutes
 
@@ -71,8 +71,8 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Onboarding, // Onboarding
-            modifier = Modifier.padding(paddingValues)
+            startDestination = NavRoutes.Onboarding, // Onboarding, Target, Profile
+            modifier = Modifier // Xóa padding ở đây để cho phép màn hình con kiểm soát
         ) {
             composable(NavRoutes.Onboarding) {
                 OnboardingScreen(onStart = {
@@ -191,12 +191,34 @@ fun AppNavHost() {
                     }
                 )
             }
-            // Bottom tabs - không có animation
-            composable(NavRoutes.Home ) { HomeScreen(navController) }
-            composable(NavRoutes.Meal) { MealScreen(navController) }
-            composable(NavRoutes.DailyLog) { DailyLogScreen(navController) } // Add this line
-            composable(NavRoutes.Workout) { WorkoutScreen() }
-            composable(NavRoutes.Map) { MapScreen() }
+
+            // Các màn hình có BottomNavBar sẽ được bọc trong Box với padding
+            composable(NavRoutes.Home) {
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    HomeScreen(navController)
+                }
+            }
+            composable(NavRoutes.Meal) {
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    MealScreen(navController)
+                }
+            }
+            composable(NavRoutes.DailyLog) {
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    DailyLogScreen(navController)
+                }
+            }
+            composable(NavRoutes.Workout) {
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    WorkoutScreen()
+                }
+            }
+            composable(NavRoutes.Map) {
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    MapScreen()
+                }
+            }
+
             composable("${NavRoutes.MealDetail}/{mealId}") { backStackEntry ->
                 val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
                 MealDetailScreen(mealId = mealId, navController = navController)

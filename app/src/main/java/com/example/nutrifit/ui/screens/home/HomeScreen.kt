@@ -201,13 +201,6 @@ fun HomeScreen(navController: NavController) {
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                Button(
-                                    onClick = { navController.navigate(NavRoutes.Schedule) },
-                                    modifier = Modifier.height(50.dp).padding(start = 8.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF293BB1))
-                                ) {
-                                    Text("xem lịch", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                                }
                             }
 
                             val (caloriesConsumed, calorieGoal) = when {
