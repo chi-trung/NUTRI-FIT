@@ -235,6 +235,19 @@ fun WorkoutCard(workout: Workout, onClick: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Reps: ${workout.reps}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "${workout.caloriesBurned} kcal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
                 Row {

@@ -173,6 +173,10 @@ private fun InfoCard(workout: Workout) {
             Spacer(modifier = Modifier.height(12.dp))
             InfoChipRow(icon = Icons.Default.Shield, title = "Độ khó", value = workout.difficulty)
             Spacer(modifier = Modifier.height(12.dp))
+            InfoChipRow(icon = Icons.Default.FitnessCenter, title = "Reps", value = workout.reps)
+            Spacer(modifier = Modifier.height(12.dp))
+            InfoChipRow(icon = Icons.Default.FitnessCenter, title = "Calories Burned", value = "${workout.caloriesBurned} kcal")
+            Spacer(modifier = Modifier.height(12.dp))
             InfoChipRow(icon = Icons.Default.Bookmark, title = "Mục tiêu", value = workout.targets.joinToString(), isChipRow = true)
         }
     }

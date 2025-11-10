@@ -19,6 +19,8 @@ class ExerciseRepository {
             val muscleGroup = document.getString("muscleGroup") ?: ""
             val targets = document.get("targets") as? List<String> ?: emptyList()
             val videoUrl = document.getString("videoUrl") ?: ""
+            val caloriesBurned = document.getLong("caloriesBurned")?.toInt() ?: 0
+            val reps = document.getString("reps") ?: ""
 
             Exercise(
                 id = id,
@@ -28,7 +30,9 @@ class ExerciseRepository {
                 imageUrl = imageUrl,
                 muscleGroup = muscleGroup,
                 targets = targets,
-                videoUrl = videoUrl
+                videoUrl = videoUrl,
+                caloriesBurned = caloriesBurned,
+                reps = reps
             )
         } catch (e: Exception) {
             null

@@ -265,7 +265,7 @@ fun MealLogItem(meal: ConsumedMeal, onDelete: () -> Unit) {
             Text(meal.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
             Text("Lúc: ${time.format(timeFormatter)} - ${meal.mealType}", fontSize = 13.sp, color = Color.DarkGray)
         }
-        Text("${meal.calories} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+        Text("${meal.calories} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Black)
         IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete Meal", tint = Color.Red.copy(alpha=0.7f)) }
     }
 }
@@ -292,7 +292,7 @@ fun WorkoutLogItem(workout: ConsumedWorkout, onDelete: () -> Unit) {
             Text(workout.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
             Text("Lúc: ${time.format(timeFormatter)}", fontSize = 13.sp, color = Color.DarkGray)
         }
-        Text("${workout.caloriesBurned} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.secondary)
+        Text("${workout.caloriesBurned} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Black)
         IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete Workout", tint = Color.Red.copy(alpha=0.7f)) }
     }
 }

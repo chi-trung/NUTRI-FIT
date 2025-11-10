@@ -9,5 +9,7 @@ data class Exercise(
     val muscleGroup: String = "",
     val targets: List<String> = emptyList(),
     val videoUrl: String = "",
+    val caloriesBurned: Int = 0,
+    val reps: String = "",
     var isCompleted: Boolean = false
 )

@@ -12,6 +12,8 @@ data class Workout(
     val targets: List<String> = emptyList(),
     val imageUrl: String = "",
     val videoUrl: String = "",
+    val caloriesBurned: Int = 0,
+    val reps: String = "",
     var imageResId: Int = 0,
     var videoResId: Int = 0
 ) : Parcelable

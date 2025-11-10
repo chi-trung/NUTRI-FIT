@@ -153,12 +153,7 @@ class ScheduleViewModel : ViewModel() {
                 }
 
             if (isChecked) {
-                val caloriesBurned = when (exercise.difficulty) {
-                    "Dễ" -> 100
-                    "Trung bình" -> 150
-                    "Khó" -> 200
-                    else -> 150 // Mặc định
-                }
+                val caloriesBurned = exercise.caloriesBurned
 
                 val completedWorkout = CompletedWorkout(
                     userId = userId,

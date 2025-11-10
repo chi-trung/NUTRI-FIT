@@ -367,6 +367,8 @@ fun HomeScreen(navController: NavController) {
                                             targets = exercise.targets,
                                             imageUrl = exercise.imageUrl,
                                             videoUrl = exercise.videoUrl,
+                                            caloriesBurned = exercise.caloriesBurned,
+                                            reps = exercise.reps,
                                             videoResId = videoResId
                                         )
                                         navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
@@ -509,6 +511,10 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
                 Text(text = "Nhóm cơ: ${exercise.muscleGroup}", fontSize = 14.sp, color = Color.Black)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = "Độ khó: ${exercise.difficulty}", fontSize = 14.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Reps: ${exercise.reps}", fontSize = 14.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "${exercise.caloriesBurned} kcal", fontSize = 14.sp, color = Color.Red, fontWeight = FontWeight.SemiBold)
             }
         }
     }
