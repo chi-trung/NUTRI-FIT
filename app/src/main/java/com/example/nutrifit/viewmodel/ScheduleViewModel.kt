@@ -153,10 +153,19 @@ class ScheduleViewModel : ViewModel() {
                 }
 
             if (isChecked) {
+                val caloriesBurned = when (exercise.difficulty) {
+                    "Dễ" -> 100
+                    "Trung bình" -> 150
+                    "Khó" -> 200
+                    else -> 150 // Mặc định
+                }
+
                 val completedWorkout = CompletedWorkout(
                     userId = userId,
                     workoutName = exercise.name,
                     muscleGroup = exercise.muscleGroup,
+                    caloriesBurned = caloriesBurned,
+                    imageUrl = exercise.imageUrl,
                     completedAt = java.util.Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
                 )
                 workoutCompletionRepository.markWorkoutAsComplete(userId, completedWorkout).onSuccess {
@@ -166,7 +175,8 @@ class ScheduleViewModel : ViewModel() {
                     val consumedWorkout = ConsumedWorkout(
                         id = UUID.randomUUID().toString(),
                         name = exercise.name,
-                        caloriesBurned = 150, // Ước tính calo, sẽ cải thiện sau
+                        caloriesBurned = caloriesBurned,
+                        imageUrl = exercise.imageUrl,
                         timestamp = System.currentTimeMillis()
                     )
                     viewModelScope.launch {

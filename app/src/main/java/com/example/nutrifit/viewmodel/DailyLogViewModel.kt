@@ -12,8 +12,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.threeten.bp.Instant
+import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
+import org.threeten.bp.format.DateTimeFormatter
+import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 class DailyLogViewModel : ViewModel() {
 
@@ -24,12 +28,22 @@ class DailyLogViewModel : ViewModel() {
     private val _logState = MutableStateFlow<LogState>(LogState.Loading)
     val logState: StateFlow<LogState> = _logState
 
+    private val weekOffset = MutableStateFlow(0)
+
+    private val _weekDisplay = MutableStateFlow("")
+    val weekDisplay: StateFlow<String> = _weekDisplay
+
     init {
-        // Bắt đầu lắng nghe các thay đổi trong thời gian thực
-        listenForDailyLogChanges()
+        viewModelScope.launch {
+            weekOffset.collect { offset ->
+                val (startDate, endDate) = getWeekDateRange(offset)
+                updateWeekDisplay(startDate, endDate)
+                listenForLogChanges(startDate, endDate)
+            }
+        }
     }
 
-    private fun listenForDailyLogChanges() {
+    private fun listenForLogChanges(startDate: Date, endDate: Date) {
         viewModelScope.launch {
             _logState.value = LogState.Loading
             val userId = auth.currentUser?.uid
@@ -38,13 +52,15 @@ class DailyLogViewModel : ViewModel() {
                 return@launch
             }
 
-            // Lắng nghe Flow từ repository
-            dailyIntakeRepository.getDailyIntakeFlow(userId, Date()).collect { result ->
+            dailyIntakeRepository.getIntakeForDateRange(userId, startDate, endDate).collect { result ->
                 if (result.isSuccess) {
-                    val intake = result.getOrNull()
+                    val weeklyIntake = result.getOrNull() ?: emptyList()
+                    val allMeals = weeklyIntake.flatMap { it.consumedMeals }.sortedByDescending { meal: ConsumedMeal -> meal.consumedAt.time }
+                    val allWorkouts = weeklyIntake.flatMap { it.consumedWorkouts }.sortedByDescending { workout: ConsumedWorkout -> workout.timestamp }
+
                     _logState.value = LogState.Success(
-                        meals = intake?.consumedMeals ?: emptyList(),
-                        workouts = intake?.consumedWorkouts ?: emptyList()
+                        meals = allMeals,
+                        workouts = allWorkouts
                     )
                 } else {
                     _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to fetch log")
@@ -53,29 +69,60 @@ class DailyLogViewModel : ViewModel() {
         }
     }
 
+    fun previousWeek() {
+        weekOffset.value--
+    }
+
+    fun nextWeek() {
+        if (weekOffset.value < 0) {
+            weekOffset.value++
+        }
+    }
+
+    private fun getWeekDateRange(offset: Int): Pair<Date, Date> {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.WEEK_OF_YEAR, offset)
+
+        // Set to the first day of the week (Monday)
+        calendar.firstDayOfWeek = Calendar.MONDAY
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startDate = calendar.time
+
+        // Add 6 days to get Sunday
+        calendar.add(Calendar.DAY_OF_YEAR, 6)
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
+        val endDate = calendar.time
+
+        return Pair(startDate, endDate)
+    }
+
+    private fun updateWeekDisplay(startDate: Date, endDate: Date) {
+        val formatter = DateTimeFormatter.ofPattern("dd/MM")
+        val start = Instant.ofEpochMilli(startDate.time).atZone(ZoneId.systemDefault()).toLocalDate()
+        val end = Instant.ofEpochMilli(endDate.time).atZone(ZoneId.systemDefault()).toLocalDate()
+        _weekDisplay.value = "Tuần: ${start.format(formatter)} - ${end.format(formatter)}"
+    }
+
     fun deleteMeal(meal: ConsumedMeal) {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: return@launch
-
-            val result = dailyIntakeRepository.removeConsumedMeal(userId, meal)
-            if (result.isFailure) {
-                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to delete meal")
-            }
+            dailyIntakeRepository.removeConsumedMeal(userId, meal)
         }
     }
 
     fun deleteWorkout(workout: ConsumedWorkout) {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: return@launch
-
-            // 1. Xóa workout khỏi nhật ký
             val result = dailyIntakeRepository.removeConsumedWorkout(userId, workout)
-            if (result.isFailure) {
-                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to delete workout")
-                return@launch
-            }
+            if (result.isFailure) return@launch
 
-            // 2. Bỏ đánh dấu hoàn thành trong lịch tập
             val date = Instant.ofEpochMilli(workout.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
             workoutCompletionRepository.unmarkWorkoutAsComplete(userId, workout.name, date)
         }
@@ -84,10 +131,18 @@ class DailyLogViewModel : ViewModel() {
     fun clearAllMeals() {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: return@launch
-
-            val result = dailyIntakeRepository.clearAllConsumedMeals(userId, Date())
-            if (result.isFailure) {
-                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to clear meals")
+            if (_logState.value is LogState.Success) {
+                val mealsToDelete = (_logState.value as LogState.Success).meals
+                mealsToDelete.groupBy { meal ->
+                    val cal = Calendar.getInstance().apply { timeInMillis = meal.consumedAt.time }
+                    cal.get(Calendar.DAY_OF_YEAR)
+                }.keys.forEach { dayOfYear ->
+                    val mealInDay = mealsToDelete.first { meal ->
+                        val cal = Calendar.getInstance().apply { timeInMillis = meal.consumedAt.time }
+                        cal.get(Calendar.DAY_OF_YEAR) == dayOfYear
+                    }
+                    dailyIntakeRepository.clearAllConsumedMealsForDate(userId, mealInDay.consumedAt)
+                }
             }
         }
     }
@@ -95,19 +150,24 @@ class DailyLogViewModel : ViewModel() {
     fun clearAllWorkouts() {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: return@launch
-            val workoutsToUnmark = (logState.value as? LogState.Success)?.workouts ?: emptyList()
-            
-            // 1. Xóa tất cả workout khỏi nhật ký
-            val result = dailyIntakeRepository.clearAllConsumedWorkouts(userId, Date())
-            if (result.isFailure) {
-                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to clear workouts")
-                return@launch
-            }
+            if (_logState.value is LogState.Success) {
+                val workoutsToDelete = (_logState.value as LogState.Success).workouts
 
-            // 2. Bỏ đánh dấu tất cả workout trong lịch tập của ngày hôm nay
-            val today = org.threeten.bp.LocalDate.now()
-            workoutsToUnmark.forEach {
-                workoutCompletionRepository.unmarkWorkoutAsComplete(userId, it.name, today)
+                workoutsToDelete.forEach {
+                    val date = Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+                    workoutCompletionRepository.unmarkWorkoutAsComplete(userId, it.name, date)
+                }
+
+                 workoutsToDelete.groupBy { workout ->
+                    val cal = Calendar.getInstance().apply { timeInMillis = workout.timestamp }
+                    cal.get(Calendar.DAY_OF_YEAR)
+                }.keys.forEach { dayOfYear ->
+                    val workoutInDay = workoutsToDelete.first { workout ->
+                        val cal = Calendar.getInstance().apply { timeInMillis = workout.timestamp }
+                        cal.get(Calendar.DAY_OF_YEAR) == dayOfYear
+                    }
+                    dailyIntakeRepository.clearAllConsumedWorkoutsForDate(userId, Date(workoutInDay.timestamp))
+                }
             }
         }
     }
@@ -119,5 +179,6 @@ sealed class LogState {
         val meals: List<ConsumedMeal>,
         val workouts: List<ConsumedWorkout>
     ) : LogState()
+
     data class Error(val message: String) : LogState()
 }

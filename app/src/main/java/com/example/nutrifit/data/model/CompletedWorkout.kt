@@ -8,6 +8,8 @@ data class CompletedWorkout(
     val userId: String = "",
     val workoutName: String = "",
     val muscleGroup: String = "",
+    val caloriesBurned: Int = 0,
+    val imageUrl: String = "",
     @ServerTimestamp
     val completedAt: Date = Date()
 )

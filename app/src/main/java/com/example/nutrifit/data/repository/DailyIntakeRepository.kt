@@ -5,6 +5,7 @@ import com.example.nutrifit.data.model.ConsumedWorkout
 import com.example.nutrifit.data.model.DailyIntake
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -16,17 +17,12 @@ class DailyIntakeRepository {
 
     private val db = FirebaseFirestore.getInstance().collection("daily_intakes")
 
-    fun getDailyIntakeFlow(userId: String, date: Date): Flow<Result<DailyIntake?>> = callbackFlow {
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        val startOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
-        val endOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59) }.time
-
+    fun getIntakeForDateRange(userId: String, startDate: Date, endDate: Date): Flow<Result<List<DailyIntake>>> = callbackFlow {
         val query = db
             .whereEqualTo("userId", userId)
-            .whereGreaterThanOrEqualTo("date", startOfDay)
-            .whereLessThanOrEqualTo("date", endOfDay)
-            .limit(1)
+            .whereGreaterThanOrEqualTo("date", startDate)
+            .whereLessThanOrEqualTo("date", endDate)
+            .orderBy("date", Query.Direction.DESCENDING)
 
         val listener = query.addSnapshotListener { snapshot, e ->
             if (e != null) {
@@ -34,17 +30,19 @@ class DailyIntakeRepository {
                 return@addSnapshotListener
             }
 
-            val document = snapshot?.documents?.firstOrNull()
-            if (document == null) {
-                trySend(Result.success(null))
+            if (snapshot == null) {
+                trySend(Result.success(emptyList()))
             } else {
-                val dailyIntake = document.toObject(DailyIntake::class.java)?.copy(id = document.id)
-                trySend(Result.success(dailyIntake))
+                val weeklyIntakes = snapshot.documents.mapNotNull {
+                    it.toObject(DailyIntake::class.java)?.copy(id = it.id)
+                }
+                trySend(Result.success(weeklyIntakes))
             }
         }
 
         awaitClose { listener.remove() }
     }
+
 
     private suspend fun getDailyIntake(userId: String, date: Date): Result<DailyIntake?> {
         return try {
@@ -124,19 +122,20 @@ class DailyIntakeRepository {
 
     suspend fun removeConsumedMeal(userId: String, meal: ConsumedMeal): Result<Unit> {
         return try {
-            val today = Date()
-            val existingIntakeResult = getDailyIntake(userId, today)
+            // Find the document that contains the meal based on its consumption date
+            val mealDate = meal.consumedAt
+            val intakeResult = getDailyIntake(userId, mealDate)
 
-            if (existingIntakeResult.isSuccess) {
-                val existingIntake = existingIntakeResult.getOrNull()
-                if (existingIntake != null && existingIntake.id.isNotEmpty()) {
-                    db.document(existingIntake.id).update("consumedMeals", FieldValue.arrayRemove(meal)).await()
+            if (intakeResult.isSuccess) {
+                val intake = intakeResult.getOrNull()
+                if (intake != null && intake.id.isNotEmpty()) {
+                    db.document(intake.id).update("consumedMeals", FieldValue.arrayRemove(meal)).await()
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("No intake document found for today to remove meal from."))
+                    Result.failure(Exception("No intake document found for that day to remove meal from."))
                 }
             } else {
-                Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to check for existing intake."))
+                Result.failure(intakeResult.exceptionOrNull() ?: Exception("Failed to find intake to remove meal."))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -145,25 +144,26 @@ class DailyIntakeRepository {
 
     suspend fun removeConsumedWorkout(userId: String, workout: ConsumedWorkout): Result<Unit> {
         return try {
-            val today = Date()
-            val existingIntakeResult = getDailyIntake(userId, today)
+            // Find the document that contains the workout based on its timestamp
+            val workoutDate = Date(workout.timestamp)
+            val intakeResult = getDailyIntake(userId, workoutDate)
 
-            if (existingIntakeResult.isSuccess) {
-                val existingIntake = existingIntakeResult.getOrNull()
-                if (existingIntake != null && existingIntake.id.isNotEmpty()) {
-                    db.document(existingIntake.id).update("consumedWorkouts", FieldValue.arrayRemove(workout)).await()
+            if (intakeResult.isSuccess) {
+                val intake = intakeResult.getOrNull()
+                if (intake != null && intake.id.isNotEmpty()) {
+                    db.document(intake.id).update("consumedWorkouts", FieldValue.arrayRemove(workout)).await()
                     Result.success(Unit)
                 } else {
-                    Result.failure(Exception("No intake document found for today to remove workout from."))
+                    Result.failure(Exception("No intake document found for that day to remove workout from."))
                 }
             } else {
-                Result.failure(existingIntakeResult.exceptionOrNull() ?: Exception("Failed to check for existing intake."))
+                Result.failure(intakeResult.exceptionOrNull() ?: Exception("Failed to find intake to remove workout."))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-    
+
     suspend fun removeConsumedWorkoutByName(userId: String, workoutName: String, date: Date): Result<Unit> {
         return try {
             val existingIntakeResult = getDailyIntake(userId, date)
@@ -185,7 +185,7 @@ class DailyIntakeRepository {
         }
     }
 
-    suspend fun clearAllConsumedMeals(userId: String, date: Date): Result<Unit> {
+    suspend fun clearAllConsumedMealsForDate(userId: String, date: Date): Result<Unit> {
         return try {
             val existingIntakeResult = getDailyIntake(userId, date)
 
@@ -203,7 +203,7 @@ class DailyIntakeRepository {
         }
     }
 
-    suspend fun clearAllConsumedWorkouts(userId: String, date: Date): Result<Unit> {
+    suspend fun clearAllConsumedWorkoutsForDate(userId: String, date: Date): Result<Unit> {
         return try {
             val existingIntakeResult = getDailyIntake(userId, date)
 

@@ -72,7 +72,7 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
         }
         _mealsState.value = MealsState.Success(filtered)
     }
-    
+
     private fun mapMealImages(meals: List<Meal>): List<Meal> {
         val context = getApplication<Application>().applicationContext
         return meals.map { meal ->
@@ -80,9 +80,9 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
             val imageIdentifier = if (imageResName.isNotEmpty()) {
                  context.resources.getIdentifier(imageResName, "drawable", context.packageName)
             } else { 0 }
-            
-            val finalImageResId = if (imageIdentifier == 0) R.drawable.logo else imageIdentifier 
-            
+
+            val finalImageResId = if (imageIdentifier == 0) R.drawable.logo else imageIdentifier
+
             meal.copy(imageResId = finalImageResId)
         }
     }
@@ -101,7 +101,8 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
                 mealId = meal.id,
                 name = meal.name,
                 calories = meal.calories,
-                mealType = mealType
+                mealType = mealType,
+                imageRes = meal.imageRes // <-- THE FIX IS HERE
             )
 
             dailyIntakeRepository.addConsumedMeal(userId, consumedMeal).onSuccess {

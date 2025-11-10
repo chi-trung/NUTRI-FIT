@@ -11,6 +11,7 @@ data class DailyIntake(
     val userId: String = "",
     @ServerTimestamp
     val date: Date? = null,
+    val totalCalories: Int = 0, 
     val consumedMeals: List<ConsumedMeal> = emptyList(),
     val consumedWorkouts: List<ConsumedWorkout> = emptyList()
 ) {

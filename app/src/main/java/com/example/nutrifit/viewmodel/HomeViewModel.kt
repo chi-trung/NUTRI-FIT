@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Date
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -32,13 +33,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val suggestedMealsState: StateFlow<MealsState> = _suggestedMealsState
 
     init {
-        // Tách biệt việc lấy dữ liệu 1 lần và lắng nghe liên tục
         fetchUserDataAndSuggestions()
         listenForDailyIntakeChanges()
     }
 
     fun refresh() {
-        // Chỉ cần tải lại dữ liệu người dùng và gợi ý, vì nhật ký đã được lắng nghe
         fetchUserDataAndSuggestions()
     }
 
@@ -68,12 +67,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             _dailyIntakeState.value = DailyIntakeState.Loading
             val firebaseUser = auth.currentUser
             if (firebaseUser != null) {
-                // *** THAY ĐỔI CHÍNH: Sử dụng getDailyIntakeFlow để lắng nghe thay đổi ***
-                dailyIntakeRepository.getDailyIntakeFlow(firebaseUser.uid, Date()).collect { result ->
-                    result.onSuccess {
-                        _dailyIntakeState.value = DailyIntakeState.Success(it)
-                    }.onFailure {
-                        _dailyIntakeState.value = DailyIntakeState.Error(it.message ?: "Failed to fetch daily intake.")
+                val calendar = Calendar.getInstance()
+                val today = Date()
+                calendar.time = today
+                val startOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
+                val endOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59) }.time
+
+                dailyIntakeRepository.getIntakeForDateRange(firebaseUser.uid, startOfDay, endOfDay).collect { result ->
+                    result.onSuccess { dailyIntakeList ->
+                        // The flow now returns a list, for the home screen we only need the first (and likely only) item.
+                        _dailyIntakeState.value = DailyIntakeState.Success(dailyIntakeList.firstOrNull())
+                    }.onFailure { exception ->
+                        _dailyIntakeState.value = DailyIntakeState.Error(exception.message ?: "Failed to fetch daily intake.")
                     }
                 }
             } else {
@@ -87,8 +92,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
              mealRepository.getMealsByGoal(goal).onSuccess { meals ->
                  val mappedMeals = mapMealImages(meals)
                 _suggestedMealsState.value = MealsState.Success(mappedMeals)
-             }.onFailure {
-                 _suggestedMealsState.value = MealsState.Error(it.message ?: "Failed to fetch suggestions")
+             }.onFailure { e ->
+                 _suggestedMealsState.value = MealsState.Error(e.message ?: "Failed to fetch suggestions")
              }
         }
     }

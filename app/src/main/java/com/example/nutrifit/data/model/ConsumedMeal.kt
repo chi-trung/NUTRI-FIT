@@ -12,6 +12,7 @@ data class ConsumedMeal(
     val name: String = "",
     val calories: Int = 0,
     val mealType: String = "", // e.g., "Buổi sáng", "Buổi trưa"
+    val imageRes: String = "", // Drawable resource name for the meal image
     @ServerTimestamp
     val consumedAt: Date = Date()
 )

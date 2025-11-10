@@ -20,14 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.Exercise
 import com.example.nutrifit.ui.theme.NutriFitTheme
@@ -75,14 +78,12 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
                 Text(text = state.message, modifier = Modifier.align(Alignment.Center))
             }
             is ScheduleState.Success -> {
-                // *** SỬA LỖI: Truyền onBackClick xuống cho ScheduleContent ***
                 ScheduleContent(schedules = state.schedules, viewModel = viewModel, onBackClick = onBackClick)
             }
         }
     }
 }
 
-// *** SỬA LỖI: Thêm onBackClick vào signature và di chuyển nút Quay lại vào đây ***
 @Composable
 fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, onBackClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -149,14 +150,13 @@ fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
 
-        // Nút Quay lại được đặt ở đây, trong Box của ScheduleContent
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 40.dp, start = 16.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.White)
-                .clickable { onBackClick() } // Sử dụng onBackClick đã được truyền vào
+                .clickable { onBackClick() }
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -310,25 +310,49 @@ fun DayItemNew(schedule: DailySchedule, isToday: Boolean, isSelected: Boolean, i
 @Composable
 fun ExerciseItem(exercise: Exercise, onCheckedChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFF4CAF50)).padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(painter = painterResource(id = R.drawable.baitap), contentDescription = "Icon bài tập", tint = Color.White, modifier = Modifier.size(24.dp))
-        }
-        Spacer(modifier = Modifier.width(12.dp))
+        AsyncImage(
+            model = exercise.imageUrl,
+            contentDescription = exercise.name,
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(id = R.drawable.baitap),
+            error = painterResource(id = R.drawable.baitap)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = exercise.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (exercise.isCompleted) Color.Gray else Color.Black)
-            Text(text = exercise.description, fontSize = 14.sp, color = Color.Gray, maxLines = 2)
+            Text(
+                text = exercise.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (exercise.isCompleted) Color.Gray else Color.Black,
+                textDecoration = if (exercise.isCompleted) TextDecoration.LineThrough else null
+            )
+            Text(
+                text = exercise.description,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                maxLines = 2
+            )
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         Checkbox(
-            checked = exercise.isCompleted, 
-            onCheckedChange = onCheckedChange, 
-            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50), uncheckedColor = Color.Gray)
+            checked = exercise.isCompleted,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = Color(0xFF4CAF50),
+                uncheckedColor = Color.Gray
+            )
         )
     }
 }
