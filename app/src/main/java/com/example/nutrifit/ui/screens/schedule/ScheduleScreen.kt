@@ -34,6 +34,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.Exercise
+import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.ui.theme.NutriFitTheme
 import com.example.nutrifit.viewmodel.CompletionState
@@ -88,6 +89,7 @@ fun ScheduleScreen(navController: NavController, onBackClick: () -> Unit) {
 
 @Composable
 fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, navController: NavController, onBackClick: () -> Unit) {
+    val context = LocalContext.current
     Box(modifier = Modifier.fillMaxSize()) {
         var selectedDate by remember { mutableStateOf(LocalDate.now()) }
         val today = LocalDate.now()
@@ -234,6 +236,7 @@ fun ScheduleHeader(
 
 @Composable
 fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, navController: NavController) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -258,7 +261,19 @@ fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, n
                             viewModel.handleCheckChanged(exercise, it, schedule.date)
                         },
                         onClick = {
-                            navController.navigate("${NavRoutes.WORKOUT_DETAIL}/${exercise.id}")
+                            val videoResId = context.resources.getIdentifier(exercise.videoUrl, "raw", context.packageName)
+                            val workout = Workout(
+                                name = exercise.name,
+                                description = exercise.description,
+                                muscleGroup = exercise.muscleGroup,
+                                difficulty = exercise.difficulty,
+                                targets = exercise.targets,
+                                imageUrl = exercise.imageUrl,
+                                videoUrl = exercise.videoUrl,
+                                videoResId = videoResId
+                            )
+                            navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
+                            navController.navigate(NavRoutes.WORKOUT_DETAIL)
                         }
                     )
                     if (index < schedule.exercises.size - 1) {
