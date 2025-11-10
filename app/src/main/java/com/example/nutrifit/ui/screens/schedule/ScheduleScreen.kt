@@ -75,18 +75,88 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
                 Text(text = state.message, modifier = Modifier.align(Alignment.Center))
             }
             is ScheduleState.Success -> {
-                ScheduleContent(schedules = state.schedules, viewModel = viewModel)
+                // *** SỬA LỖI: Truyền onBackClick xuống cho ScheduleContent ***
+                ScheduleContent(schedules = state.schedules, viewModel = viewModel, onBackClick = onBackClick)
             }
         }
+    }
+}
 
-        // *** SỬA LỖI: Nút quay lại được đặt ở đây (cố định) với padding lớn hơn ***
+// *** SỬA LỖI: Thêm onBackClick vào signature và di chuyển nút Quay lại vào đây ***
+@Composable
+fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, onBackClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+        val today = LocalDate.now()
+
+        LaunchedEffect(key1 = selectedDate) {
+            viewModel.updateScheduleForDate(selectedDate)
+        }
+
+        val todaySchedule = schedules.find { it.date == selectedDate }
+        val dateFormatter = DateTimeFormatter.ofPattern("dd - MM - yyyy", Locale.getDefault())
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item { Spacer(modifier = Modifier.height(100.dp)) }
+
+            item {
+                Column(
+                    Modifier.padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ScheduleHeader(
+                        today = today,
+                        selectedDate = selectedDate,
+                        onDateChanged = { newDate -> selectedDate = newDate },
+                        onWeekChanged = { direction ->
+                            selectedDate = if (direction > 0) {
+                                selectedDate.plusWeeks(1)
+                            } else {
+                                selectedDate.minusWeeks(1)
+                            }
+                        },
+                        weeklySchedules = schedules,
+                        dateFormatter = dateFormatter
+                    )
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+
+            item {
+                todaySchedule?.let {
+                    Column(Modifier.padding(horizontal = 16.dp)) {
+                        ScheduleDetailsCard(schedule = it, viewModel = viewModel)
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            item {
+                todaySchedule?.let {
+                    Column(Modifier.padding(horizontal = 16.dp)) {
+                        DailyProgressFooter(schedule = it)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        WeeklyProgressFooter(weeklySchedules = schedules)
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+
+        // Nút Quay lại được đặt ở đây, trong Box của ScheduleContent
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(top = 40.dp, start = 16.dp) // Tăng padding top
+                .padding(top = 40.dp, start = 16.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.White)
-                .clickable { onBackClick() }
+                .clickable { onBackClick() } // Sử dụng onBackClick đã được truyền vào
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -105,73 +175,6 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
                 )
             }
         }
-    }
-}
-
-@Composable
-fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel) {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    val today = LocalDate.now()
-
-    LaunchedEffect(key1 = selectedDate) {
-        viewModel.updateScheduleForDate(selectedDate)
-    }
-
-    val todaySchedule = schedules.find { it.date == selectedDate }
-    val dateFormatter = DateTimeFormatter.ofPattern("dd - MM - yyyy", Locale.getDefault())
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Khoảng trống đầu danh sách để nội dung không bị nút Quay lại che mất
-        item { Spacer(modifier = Modifier.height(100.dp)) }
-
-        item {
-            Column(
-                Modifier.padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ScheduleHeader(
-                    today = today,
-                    selectedDate = selectedDate,
-                    onDateChanged = { newDate -> selectedDate = newDate },
-                    onWeekChanged = { direction ->
-                        selectedDate = if (direction > 0) {
-                            selectedDate.plusWeeks(1)
-                        } else {
-                            selectedDate.minusWeeks(1)
-                        }
-                    },
-                    weeklySchedules = schedules,
-                    dateFormatter = dateFormatter
-                )
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        item {
-            todaySchedule?.let {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    ScheduleDetailsCard(schedule = it, viewModel = viewModel)
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        item {
-            todaySchedule?.let {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    DailyProgressFooter(schedule = it)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    WeeklyProgressFooter(weeklySchedules = schedules)
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
 
@@ -206,7 +209,7 @@ fun ScheduleHeader(
         }
 
         Box(modifier = Modifier.height(52.dp).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
-            if (selectedDate != today) {
+             if (selectedDate != today) {
                 Button(
                     onClick = { onDateChanged(today) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800), contentColor = Color.White),
@@ -216,7 +219,7 @@ fun ScheduleHeader(
                 }
             }
         }
-
+        
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             weeklySchedules.forEach { schedule ->
                 val isScheduleComplete = schedule.exercises.isNotEmpty() && schedule.exercises.all { it.isCompleted }
@@ -323,8 +326,8 @@ fun ExerciseItem(exercise: Exercise, onCheckedChange: (Boolean) -> Unit) {
             Text(text = exercise.description, fontSize = 14.sp, color = Color.Gray, maxLines = 2)
         }
         Checkbox(
-            checked = exercise.isCompleted,
-            onCheckedChange = onCheckedChange,
+            checked = exercise.isCompleted, 
+            onCheckedChange = onCheckedChange, 
             colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50), uncheckedColor = Color.Gray)
         )
     }

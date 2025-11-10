@@ -73,7 +73,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Schedule, // Onboarding, Target, Profile
+            startDestination = NavRoutes.Workout, // *** SỬA LỖI: Đặt Workout làm màn hình bắt đầu ***
             modifier = Modifier // Xóa padding ở đây để cho phép màn hình con kiểm soát
         ) {
             composable(NavRoutes.Onboarding) {
