@@ -7,6 +7,7 @@ import com.example.nutrifit.data.repository.DailyIntakeRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -19,10 +20,11 @@ class DailyLogViewModel : ViewModel() {
     val logState: StateFlow<LogState> = _logState
 
     init {
-        fetchDailyLog()
+        // Bắt đầu lắng nghe các thay đổi trong thời gian thực
+        listenForDailyLogChanges()
     }
 
-    fun fetchDailyLog() {
+    private fun listenForDailyLogChanges() {
         viewModelScope.launch {
             _logState.value = LogState.Loading
             val userId = auth.currentUser?.uid
@@ -31,27 +33,25 @@ class DailyLogViewModel : ViewModel() {
                 return@launch
             }
 
-            val result = repository.getDailyIntake(userId, Date())
-            if (result.isSuccess) {
-                val intake = result.getOrNull()
-                _logState.value = LogState.Success(intake?.consumedMeals ?: emptyList())
-            } else {
-                _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to fetch log")
+            // Lắng nghe Flow từ repository
+            repository.getDailyIntakeFlow(userId, Date()).collect { result ->
+                if (result.isSuccess) {
+                    val intake = result.getOrNull()
+                    _logState.value = LogState.Success(intake?.consumedMeals ?: emptyList())
+                } else {
+                    _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to fetch log")
+                }
             }
         }
     }
 
     fun deleteMeal(meal: ConsumedMeal) {
         viewModelScope.launch {
-            val userId = auth.currentUser?.uid
-            if (userId == null) {
-                return@launch
-            }
+            val userId = auth.currentUser?.uid ?: return@launch
 
+            // Sau khi xóa, snapshot listener sẽ tự động cập nhật UI
             val result = repository.removeConsumedMeal(userId, meal)
-            if (result.isSuccess) {
-                fetchDailyLog()
-            } else {
+            if (result.isFailure) {
                 _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to delete meal")
             }
         }
@@ -59,15 +59,11 @@ class DailyLogViewModel : ViewModel() {
 
     fun clearAllMeals() {
         viewModelScope.launch {
-            val userId = auth.currentUser?.uid
-            if (userId == null) {
-                return@launch
-            }
+            val userId = auth.currentUser?.uid ?: return@launch
 
+            // Sau khi xóa, snapshot listener sẽ tự động cập nhật UI
             val result = repository.clearAllConsumedMeals(userId, Date())
-            if (result.isSuccess) {
-                fetchDailyLog()
-            } else {
+            if (result.isFailure) {
                 _logState.value = LogState.Error(result.exceptionOrNull()?.message ?: "Failed to clear meals")
             }
         }
