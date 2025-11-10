@@ -18,7 +18,7 @@ import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
 
 // Lớp dữ liệu cho lịch trình hàng ngày, sử dụng Exercise từ model
-data class DailySchedule( 
+data class DailySchedule(
     val date: LocalDate,
     val scheduleName: String,
     val exercises: SnapshotStateList<Exercise>
@@ -49,29 +49,46 @@ class ScheduleViewModel : ViewModel() {
     private val _completionState = MutableStateFlow<CompletionState>(CompletionState.Idle)
     val completionState: StateFlow<CompletionState> = _completionState.asStateFlow()
 
+    // *** THAY ĐỔI 1: Lưu trữ danh sách toàn bộ bài tập ***
+    private var allExercises: List<Exercise> = emptyList()
+
     init {
-        loadExercisesAndGenerateSchedules()
+        // Tải toàn bộ bài tập một lần duy nhất khi ViewModel được tạo
+        loadAllExercises()
     }
 
-    private fun loadExercisesAndGenerateSchedules() {
+    private fun loadAllExercises() {
         viewModelScope.launch {
             _scheduleState.value = ScheduleState.Loading
-            exerciseRepository.getAllExercises().onSuccess { allExercises ->
-                val weeklySchedules = generateSchedulesFromRealData(allExercises)
-                syncScheduleState(weeklySchedules) // Đồng bộ trạng thái hoàn thành
-                _scheduleState.value = ScheduleState.Success(weeklySchedules)
+            exerciseRepository.getAllExercises().onSuccess { exercises ->
+                allExercises = exercises
+                // Sau khi có danh sách bài tập, tạo lịch cho tuần hiện tại
+                updateScheduleForDate(LocalDate.now())
             }.onFailure {
                 _scheduleState.value = ScheduleState.Error(it.message ?: "Lỗi khi tải bài tập")
             }
         }
     }
 
-    private fun generateSchedulesFromRealData(allExercises: List<Exercise>): List<DailySchedule> {
-        val schedules = mutableListOf<DailySchedule>()
-        val today = LocalDate.now()
+    // *** THAY ĐỔI 2: Hàm public để giao diện gọi khi chuyển tuần ***
+    fun updateScheduleForDate(date: LocalDate) {
+        // Nếu chưa có danh sách bài tập thì không làm gì
+        if (allExercises.isEmpty()) return
 
-        // Lặp qua 7 ngày trong tuần, bắt đầu từ Thứ Hai của tuần hiện tại
-        val startOfWeek = today.with(DayOfWeek.MONDAY)
+        viewModelScope.launch {
+            // Tạo lịch cho tuần được yêu cầu
+            val weeklySchedules = generateWeekSchedule(date)
+            // Đồng bộ trạng thái hoàn thành cho tuần đó
+            syncScheduleState(weeklySchedules)
+            // Cập nhật giao diện
+            _scheduleState.value = ScheduleState.Success(weeklySchedules)
+        }
+    }
+
+    private fun generateWeekSchedule(dateInWeek: LocalDate): List<DailySchedule> {
+        val schedules = mutableListOf<DailySchedule>()
+        val startOfWeek = dateInWeek.with(DayOfWeek.MONDAY)
+
         for (i in 0..6) {
             val currentDate = startOfWeek.plusDays(i.toLong())
             val dayOfWeek = currentDate.dayOfWeek
@@ -82,7 +99,7 @@ class ScheduleViewModel : ViewModel() {
                 DayOfWeek.WEDNESDAY -> "Chân & Mông" to allExercises.filter { it.muscleGroup == "Chân" || it.muscleGroup == "Mông" }
                 DayOfWeek.THURSDAY -> "Vai & Core" to allExercises.filter { it.muscleGroup == "Vai" || it.muscleGroup == "Bụng" }
                 DayOfWeek.FRIDAY -> "Tay & Bụng" to allExercises.filter { it.muscleGroup == "Tay sau" || it.muscleGroup == "Bụng" }
-                DayOfWeek.SATURDAY -> "Cardio" to allExercises.filter { it.muscleGroup == "Toàn thân" } // Giả sử Cardio là "Toàn thân"
+                DayOfWeek.SATURDAY -> "Cardio" to allExercises.filter { it.muscleGroup == "Toàn thân" }
                 DayOfWeek.SUNDAY -> "Nghỉ ngơi" to emptyList()
             }
 
@@ -127,10 +144,8 @@ class ScheduleViewModel : ViewModel() {
                 return@launch
             }
 
-            // Cập nhật trạng thái isCompleted trên bản sao của đối tượng
             val updatedExercise = exercise.copy(isCompleted = isChecked)
 
-            // Tìm và cập nhật lại đối tượng trong danh sách
             (_scheduleState.value as? ScheduleState.Success)?.schedules
                 ?.find { it.date == date }?.exercises?.let { exercises ->
                     val index = exercises.indexOfFirst { it.id == exercise.id }
@@ -139,11 +154,10 @@ class ScheduleViewModel : ViewModel() {
                     }
                 }
 
-            // Gửi yêu cầu lên server
             if (isChecked) {
                 val completedWorkout = CompletedWorkout(
                     userId = userId,
-                    workoutName = exercise.name, // Sử dụng trường name từ model mới
+                    workoutName = exercise.name,
                     muscleGroup = exercise.muscleGroup,
                     completedAt = java.util.Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
                 )
