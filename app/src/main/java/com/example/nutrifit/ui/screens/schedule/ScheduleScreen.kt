@@ -30,9 +30,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.Exercise
+import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.ui.theme.NutriFitTheme
 import com.example.nutrifit.viewmodel.CompletionState
 import com.example.nutrifit.viewmodel.DailySchedule
@@ -45,7 +47,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleScreen(onBackClick: () -> Unit) {
+fun ScheduleScreen(navController: NavController, onBackClick: () -> Unit) {
     val viewModel: ScheduleViewModel = viewModel()
     val scheduleState by viewModel.scheduleState.collectAsState()
     val completionState by viewModel.completionState.collectAsState()
@@ -78,14 +80,14 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
                 Text(text = state.message, modifier = Modifier.align(Alignment.Center))
             }
             is ScheduleState.Success -> {
-                ScheduleContent(schedules = state.schedules, viewModel = viewModel, onBackClick = onBackClick)
+                ScheduleContent(schedules = state.schedules, viewModel = viewModel, navController = navController, onBackClick = onBackClick)
             }
         }
     }
 }
 
 @Composable
-fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, onBackClick: () -> Unit) {
+fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, navController: NavController, onBackClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         var selectedDate by remember { mutableStateOf(LocalDate.now()) }
         val today = LocalDate.now()
@@ -130,7 +132,7 @@ fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel
             item {
                 todaySchedule?.let {
                     Column(Modifier.padding(horizontal = 16.dp)) {
-                        ScheduleDetailsCard(schedule = it, viewModel = viewModel)
+                        ScheduleDetailsCard(schedule = it, viewModel = viewModel, navController = navController)
                     }
                 }
             }
@@ -231,7 +233,7 @@ fun ScheduleHeader(
 
 
 @Composable
-fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel) {
+fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -252,8 +254,11 @@ fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel) {
                 schedule.exercises.forEachIndexed { index, exercise ->
                     ExerciseItem(
                         exercise = exercise,
-                        onCheckedChange = { isChecked ->
-                            viewModel.handleCheckChanged(exercise, isChecked, schedule.date)
+                        onCheckedChange = {
+                            viewModel.handleCheckChanged(exercise, it, schedule.date)
+                        },
+                        onClick = {
+                            navController.navigate("${NavRoutes.WORKOUT_DETAIL}/${exercise.id}")
                         }
                     )
                     if (index < schedule.exercises.size - 1) {
@@ -308,11 +313,16 @@ fun DayItemNew(schedule: DailySchedule, isToday: Boolean, isSelected: Boolean, i
 }
 
 @Composable
-fun ExerciseItem(exercise: Exercise, onCheckedChange: (Boolean) -> Unit) {
+fun ExerciseItem(
+    exercise: Exercise,
+    onCheckedChange: (Boolean) -> Unit,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -398,6 +408,6 @@ fun WeeklyProgressFooter(weeklySchedules: List<DailySchedule>) {
 @Composable
 fun ScheduleScreenPreview() {
     NutriFitTheme {
-        ScheduleScreen(onBackClick = {})
+        // ScheduleScreen(onBackClick = {})
     }
 }

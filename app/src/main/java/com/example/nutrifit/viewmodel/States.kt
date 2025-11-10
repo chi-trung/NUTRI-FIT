@@ -1,6 +1,7 @@
 package com.example.nutrifit.viewmodel
 
 import com.example.nutrifit.data.model.DailyIntake
+import com.example.nutrifit.data.model.Exercise
 import com.example.nutrifit.data.model.Meal
 import com.example.nutrifit.data.model.User
 
@@ -33,4 +34,10 @@ sealed class DailyIntakeState {
     object Loading : DailyIntakeState()
     data class Success(val intake: DailyIntake?) : DailyIntakeState()
     data class Error(val message: String) : DailyIntakeState()
+}
+
+sealed class SuggestedExercisesState {
+    object Loading : SuggestedExercisesState()
+    data class Success(val exercises: List<Exercise>) : SuggestedExercisesState()
+    data class Error(val message: String) : SuggestedExercisesState()
 }

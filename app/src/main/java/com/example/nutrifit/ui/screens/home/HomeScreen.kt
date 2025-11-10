@@ -1,4 +1,3 @@
-
 package com.example.nutrifit.ui.screens.home
 
 import androidx.compose.foundation.Image
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -42,12 +43,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberImagePainter
 import com.example.nutrifit.R
+import com.example.nutrifit.data.model.Exercise
+import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.ui.screens.meal.MealCard
 import com.example.nutrifit.viewmodel.DailyIntakeState
 import com.example.nutrifit.viewmodel.HomeViewModel
 import com.example.nutrifit.viewmodel.MealsState
+import com.example.nutrifit.viewmodel.SuggestedExercisesState
 import com.example.nutrifit.viewmodel.UserState
 import java.util.Calendar
 
@@ -64,6 +69,9 @@ fun HomeScreen(navController: NavController) {
     val userState by viewModel.userState.collectAsState()
     val dailyIntakeState by viewModel.dailyIntakeState.collectAsState()
     val suggestedMealsState by viewModel.suggestedMealsState.collectAsState()
+    val suggestedExercisesState by viewModel.suggestedExercisesState.collectAsState()
+    val context = LocalContext.current
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -323,6 +331,55 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
+
+            // Exercise Suggestions Section
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("Đề xuất bài tập", color = Color.Black, fontSize = 20.sp, modifier = Modifier.align(Alignment.Start).padding(start = 25.dp))
+                }
+            }
+
+            item {
+                when (val state = suggestedExercisesState) {
+                    is SuggestedExercisesState.Loading -> {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }
+                    is SuggestedExercisesState.Error -> {
+                        Text(state.message, modifier = Modifier.padding(16.dp), color = Color.Red)
+                    }
+                    is SuggestedExercisesState.Success -> {
+                        if (state.exercises.isEmpty()) {
+                            Text("Không có đề xuất nào phù hợp.", modifier = Modifier.padding(16.dp))
+                        } else {
+                            Row(
+                                modifier = Modifier.horizontalScroll(rememberScrollState())
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                state.exercises.forEach { exercise ->
+                                    ExerciseCard(exercise = exercise) {
+                                        val videoResId = context.resources.getIdentifier(exercise.videoUrl, "raw", context.packageName)
+                                        val workout = Workout(
+                                            name = exercise.name,
+                                            description = exercise.description,
+                                            muscleGroup = exercise.muscleGroup,
+                                            difficulty = exercise.difficulty,
+                                            targets = exercise.targets,
+                                            imageUrl = exercise.imageUrl,
+                                            videoUrl = exercise.videoUrl,
+                                            videoResId = videoResId
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
+                                        navController.navigate(NavRoutes.WORKOUT_DETAIL)
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 Spacer(modifier = Modifier.height(100.dp))
             }
@@ -423,6 +480,35 @@ fun WeeklyProgressChart(weeklyData: List<WeeklyData>, calorieGoal: Int) {
                     color = Color.Black,
                     textAlign = TextAlign.Center
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(200.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = 4.dp
+    ) {
+        Column {
+            Image(
+                painter = rememberImagePainter(data = exercise.imageUrl),
+                contentDescription = exercise.name,
+                modifier = Modifier
+                    .height(120.dp)
+                    .fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(text = exercise.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Nhóm cơ: ${exercise.muscleGroup}", fontSize = 14.sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Độ khó: ${exercise.difficulty}", fontSize = 14.sp, color = Color.Black)
             }
         }
     }
