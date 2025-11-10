@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.R
-import com.example.nutrifit.data.ConsumedMeal
-import com.example.nutrifit.data.DailyIntakeRepository
-import com.example.nutrifit.data.Meal
-import com.example.nutrifit.data.MealRepository
+import com.example.nutrifit.data.model.ConsumedMeal
+import com.example.nutrifit.data.repository.DailyIntakeRepository
+import com.example.nutrifit.data.model.Meal
+import com.example.nutrifit.data.repository.MealRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

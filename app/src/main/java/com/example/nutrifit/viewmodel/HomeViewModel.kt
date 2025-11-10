@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.R
-import com.example.nutrifit.data.DailyIntakeRepository
-import com.example.nutrifit.data.Meal
-import com.example.nutrifit.data.MealRepository
-import com.example.nutrifit.data.UserRepository
+import com.example.nutrifit.data.repository.DailyIntakeRepository
+import com.example.nutrifit.data.model.Meal
+import com.example.nutrifit.data.repository.MealRepository
+import com.example.nutrifit.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,12 +44,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             if (firebaseUser != null) {
                 // Fetch User Profile
                 userRepository.getUser(firebaseUser.uid).onSuccess { user ->
-                    if (user != null) {
-                        _userState.value = UserState.Success(user)
-                        user.goal?.let { fetchMealSuggestions(it) } // Fetch suggestions after getting user goal
-                    } else {
-                        _userState.value = UserState.Error("User data is null.")
-                    }
+                    _userState.value = UserState.Success(user)
+                    user.goal?.let { fetchMealSuggestions(it) } // Fetch suggestions after getting user goal
                 }.onFailure {
                     _userState.value = UserState.Error(it.message ?: "Failed to fetch user data.")
                 }

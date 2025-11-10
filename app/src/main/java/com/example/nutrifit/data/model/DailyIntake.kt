@@ -1,4 +1,4 @@
-package com.example.nutrifit.data
+package com.example.nutrifit.data.model
 
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date

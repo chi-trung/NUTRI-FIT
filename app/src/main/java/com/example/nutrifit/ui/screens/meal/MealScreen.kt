@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutrifit.R
-import com.example.nutrifit.data.FoodCategory
-import com.example.nutrifit.data.Meal
+import com.example.nutrifit.data.model.FoodCategory
+import com.example.nutrifit.data.model.Meal
 import com.example.nutrifit.viewmodel.MealViewModel
 import com.example.nutrifit.viewmodel.MealsState
 

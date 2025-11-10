@@ -1,5 +1,6 @@
-package com.example.nutrifit.data
+package com.example.nutrifit.data.repository
 
+import com.example.nutrifit.data.model.Meal
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

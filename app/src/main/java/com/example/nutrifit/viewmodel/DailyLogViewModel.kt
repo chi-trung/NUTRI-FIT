@@ -2,8 +2,8 @@ package com.example.nutrifit.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nutrifit.data.ConsumedMeal
-import com.example.nutrifit.data.DailyIntakeRepository
+import com.example.nutrifit.data.model.ConsumedMeal
+import com.example.nutrifit.data.repository.DailyIntakeRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,5 +1,7 @@
-package com.example.nutrifit.data
+package com.example.nutrifit.data.repository
 
+import com.example.nutrifit.data.model.ConsumedMeal
+import com.example.nutrifit.data.model.DailyIntake
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -34,6 +36,7 @@ class DailyIntakeRepository {
             val id = document.id
             val docUserId = document.getString("userId") ?: ""
             val docDate = document.getDate("date")
+            @Suppress("UNCHECKED_CAST")
             val consumedMealsList = document.get("consumedMeals") as? List<HashMap<String, Any>> ?: emptyList()
 
             val meals = consumedMealsList.mapNotNull { mealMap ->

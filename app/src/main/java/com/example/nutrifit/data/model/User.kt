@@ -1,4 +1,4 @@
-package com.example.nutrifit.data
+package com.example.nutrifit.data.model
 
 data class User(
     val id: String = "",

@@ -3,7 +3,7 @@ package com.example.nutrifit.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nutrifit.data.repository.UserRepository
+import com.example.nutrifit.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class SettingViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = UserRepository(application)
+    private val repository = SettingsRepository(application)
 
     // State for settings
     private val _language = MutableStateFlow("Tiếng Việt")

@@ -1,8 +1,8 @@
 package com.example.nutrifit.viewmodel
 
-import com.example.nutrifit.data.DailyIntake
-import com.example.nutrifit.data.Meal
-import com.example.nutrifit.data.User
+import com.example.nutrifit.data.model.DailyIntake
+import com.example.nutrifit.data.model.Meal
+import com.example.nutrifit.data.model.User
 
 sealed class AddMealState {
     object Idle : AddMealState()
