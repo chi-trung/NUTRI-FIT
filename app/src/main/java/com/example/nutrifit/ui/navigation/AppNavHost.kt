@@ -73,7 +73,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Workout, // Onboarding, Target, Profile
+            startDestination = NavRoutes.Schedule, // Onboarding, Target, Profile
             modifier = Modifier // Xóa padding ở đây để cho phép màn hình con kiểm soát
         ) {
             composable(NavRoutes.Onboarding) {
@@ -225,8 +225,8 @@ fun AppNavHost() {
                 val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
                 MealDetailScreen(mealId = mealId, navController = navController)
             }
-            
-            composable(NavRoutes.WORKOUT_DETAIL) { 
+
+            composable(NavRoutes.WORKOUT_DETAIL) {
                 val workout = navController.previousBackStackEntry?.savedStateHandle?.get<Workout>("workout")
                 WorkoutDetailScreen(workout = workout, navController = navController)
             }
