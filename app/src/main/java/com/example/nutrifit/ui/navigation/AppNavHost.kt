@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.components.BottomNavBar
 import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
 import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
@@ -28,6 +29,7 @@ import com.example.nutrifit.ui.screens.register.RegisterScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.setting.SettingScreen // dang làm setting
 import com.example.nutrifit.ui.screens.target.TargetScreen
+import com.example.nutrifit.ui.screens.workout.WorkoutDetailScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 
 
@@ -71,7 +73,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Onboarding, // Onboarding, Target, Profile
+            startDestination = NavRoutes.Workout, // Onboarding, Target, Profile
             modifier = Modifier // Xóa padding ở đây để cho phép màn hình con kiểm soát
         ) {
             composable(NavRoutes.Onboarding) {
@@ -210,7 +212,7 @@ fun AppNavHost() {
             }
             composable(NavRoutes.Workout) {
                 Box(modifier = Modifier.padding(paddingValues)) {
-                    WorkoutScreen()
+                    WorkoutScreen(navController)
                 }
             }
             composable(NavRoutes.Map) {
@@ -222,6 +224,11 @@ fun AppNavHost() {
             composable("${NavRoutes.MealDetail}/{mealId}") { backStackEntry ->
                 val mealId = backStackEntry.arguments?.getString("mealId")?.toIntOrNull() ?: 0
                 MealDetailScreen(mealId = mealId, navController = navController)
+            }
+            
+            composable(NavRoutes.WORKOUT_DETAIL) { 
+                val workout = navController.previousBackStackEntry?.savedStateHandle?.get<Workout>("workout")
+                WorkoutDetailScreen(workout = workout, navController = navController)
             }
 
             composable(NavRoutes.Schedule) {

@@ -1,17 +1,41 @@
 package com.example.nutrifit.ui.screens.workout
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,446 +43,214 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.nutrifit.R
+import com.example.nutrifit.data.model.Workout
+import com.example.nutrifit.ui.navigation.NavRoutes
+import com.example.nutrifit.viewmodel.WorkoutViewModel
+import com.example.nutrifit.viewmodel.WorkoutsState
 
-@Composable
-fun WorkoutScreen() {
-    // Sử dụng Scaffold với systemBarsPadding để xử lý camera notch
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .systemBarsPadding(), // QUAN TRỌNG: Thêm padding cho system bars
-        content = { paddingValues ->
-            WorkoutContent(paddingValues = paddingValues)
-        }
-    )
+// Helper function để lấy icon cho nhóm cơ
+@DrawableRes
+fun getMuscleGroupIcon(groupName: String): Int {
+    return when (groupName) {
+        "Ngực" -> R.drawable.ic_muscle_nguc
+        "Lưng" -> R.drawable.ic_muscle_lung
+        "Chân" -> R.drawable.ic_muscle_duitruoc // Lấy đại diện cho chân
+        "Vai" -> R.drawable.ic_muscle_vai
+        "Bụng" -> R.drawable.ic_muscle_bung
+        "Toàn thân" -> R.drawable.ic_muscle_toanthan
+        else -> R.drawable.logo // Icon mặc định
+    }
 }
 
 @Composable
-fun WorkoutContent(paddingValues: PaddingValues) {
+fun WorkoutScreen(navController: NavController) {
+    val workoutViewModel: WorkoutViewModel = viewModel()
+    val workoutsState by workoutViewModel.workoutsState.collectAsState()
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.White
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+            when (val state = workoutsState) {
+                is WorkoutsState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                is WorkoutsState.Error -> {
+                    Text(state.message, color = Color.Red, modifier = Modifier.align(Alignment.Center).padding(16.dp))
+                }
+                is WorkoutsState.Success -> {
+                    WorkoutContent(groupedWorkouts = state.workouts, navController = navController)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WorkoutContent(groupedWorkouts: Map<String, List<Workout>>, navController: NavController) {
+    val muscleGroups = groupedWorkouts.keys.toList()
+    var selectedGroup by remember { mutableStateOf(muscleGroups.firstOrNull() ?: "") }
+
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(paddingValues),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
     ) {
-        // Tiêu đề chính - đã được bảo vệ bởi systemBarsPadding
         item {
             Text(
-                text = "Chọn nhóm cơ bạn muốn luyện tập",
+                text = "Chọn nhóm cơ",
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
                 color = Color.Black,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        // Lựa chọn nhóm cơ
         item {
-            MuscleGroupSelection()
+            MuscleGroupSelection(
+                groups = muscleGroups,
+                selectedGroup = selectedGroup,
+                onGroupSelected = { group -> selectedGroup = group }
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Bài tập phù hợp
         item {
             Text(
-                text = "Bài tập phù hợp cho sự lựa chọn của bạn",
+                text = "Bài tập cho $selectedGroup",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
                 color = Color.Black,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        // Hình ảnh bài tập
-        item {
-            WorkoutImage(contentDescription = "Bài tập Squats")
+        items(groupedWorkouts[selectedGroup] ?: emptyList()) { workout ->
+            WorkoutCard(workout = workout) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
+                navController.navigate(NavRoutes.WORKOUT_DETAIL)
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
 
-        // Tên bài tập và hướng dẫn
-        item {
-            ExerciseDescription()
-        }
+@Composable
+fun MuscleGroupSelection(groups: List<String>, selectedGroup: String, onGroupSelected: (String) -> Unit) {
+    val chunkedGroups = groups.chunked(3)
 
-        // Video hướng dẫn
-        item {
-            VideoSection()
-        }
-
-        // Phòng gym gần đây
-        item {
-            GymSection()
-        }
-
-        // Bản đồ
-        item {
-            MapSection()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        chunkedGroups.forEach { rowGroups ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowGroups.forEach { group ->
+                    MuscleChip(name = group, isSelected = group == selectedGroup, onClick = { onGroupSelected(group) }, modifier = Modifier.weight(1f))
+                }
+                // Thêm Spacer để các hàng không đủ 3 item vẫn căn chỉnh đúng
+                if (rowGroups.size < 3) {
+                    repeat(3 - rowGroups.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun MuscleGroupSelection() {
-    val selectedGroup = remember { mutableStateOf("") }
-
-    val groups = listOf(
-        MuscleGroup("Vai", R.drawable.ic_muscle_vai),
-        MuscleGroup("Ngực", R.drawable.ic_muscle_nguc),
-        MuscleGroup("Lưng", R.drawable.ic_muscle_lung),
-        MuscleGroup("Tay sau", R.drawable.ic_muscle_taysau),
-        MuscleGroup("Tay trước", R.drawable.ic_muscle_taytruoc),
-        MuscleGroup("Bắp chân", R.drawable.ic_muscle_bapchan),
-        MuscleGroup("Đùi trước", R.drawable.ic_muscle_duitruoc),
-        MuscleGroup("Đùi sau", R.drawable.ic_muscle_duisau),
-        MuscleGroup("Mông", R.drawable.ic_muscle_mong)
-    )
+fun MuscleChip(name: String, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val backgroundColor = if (isSelected) Color(0xFFE3F2FD) else Color.White
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFE0E0E0)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = 4.dp,
+        modifier = modifier.height(100.dp),
         shape = RoundedCornerShape(16.dp),
-        backgroundColor = Color(0xFFE3F2FD)
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, borderColor)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            val chunkedGroups = groups.chunked(3)
-            chunkedGroups.forEach { rowGroups ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    rowGroups.forEach { muscle ->
-                        MuscleBox(
-                            muscle = muscle,
-                            isSelected = selectedGroup.value == muscle.name,
-                            onClick = { selectedGroup.value = muscle.name }
-                        )
-                    }
-                    // Thêm Spacer cho các hàng không đủ 3 item
-                    repeat(3 - rowGroups.size) {
-                        Spacer(modifier = Modifier.width(100.dp))
-                    }
-                }
-                if (rowGroups != chunkedGroups.last()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MuscleBox(muscle: MuscleGroup, isSelected: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (isSelected) Color(0xFF2196F3) else Color.White
-    val textColor = if (isSelected) Color.White else Color(0xFF333333)
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(100.dp)
-            .background(backgroundColor, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .padding(vertical = 12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    if (isSelected) Color.White else Color.Transparent,
-                    RoundedCornerShape(8.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = muscle.imageRes),
-                contentDescription = muscle.name,
-                modifier = Modifier.size(40.dp),
-                contentScale = ContentScale.Fit
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = muscle.name,
-            color = textColor,
-            fontWeight = FontWeight.Medium,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun ExerciseDescription() {
-    Column(modifier = Modifier.padding(bottom = 24.dp)) {
-        Text(
-            text = "SQUATS VỚI TẠ",
-            fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            text = "Đứng thẳng, hai chân rộng bằng vai, giữ tạ trên vai (barbell) hoặc hai bên tay (dumbbell). Hít sâu, hạ người xuống bằng cách đẩy hông ra sau, lưng thẳng, gối không vượt quá mũi chân. Khi đùi song song mặt đất thì hô ra, đẩy gót chân đứng lên lại.",
-            fontSize = 14.sp,
-            color = Color(0xFF666666),
-            lineHeight = 20.sp
-        )
-    }
-}
-
-@Composable
-fun VideoSection() {
-    Column {
-        Text(
-            text = "Video hướng dẫn",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        VideoItem(
-            title = "Hướng dẫn Squats cơ bản",
-            duration = "5:30",
-            onClick = {}
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        VideoItem(
-            title = "Kỹ thuật Squats nâng cao",
-            duration = "7:15",
-            onClick = {}
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun GymSection() {
-    Column {
-        Text(
-            text = "Các phòng gym gần đây",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        gymList.forEach { gym ->
-            GymRowItem(gym = gym)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = { /* Handle click */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = Color(0xFF2196F3)
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "Các phòng gym ở phạm vi 5 km gần đây",
-                color = Color.White,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun MapSection() {
-    Column {
-        MapImage(contentDescription = "Bản đồ phòng gym")
-        Spacer(modifier = Modifier.height(80.dp))
-    }
-}
-
-@Composable
-fun WorkoutImage(contentDescription: String) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.sample_workout),
-            contentDescription = contentDescription,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-}
-
-@Composable
-fun VideoItem(title: String, duration: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
-            .clickable { onClick() },
-        elevation = 2.dp,
-        shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color(0xFFF8F9FA)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(Color(0xFF2196F3), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Thời lượng: $duration",
-                    fontSize = 12.sp,
-                    color = Color(0xFF666666)
-                )
-            }
-
-            Text(
-                text = duration,
-                fontSize = 12.sp,
-                color = Color(0xFF666666),
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-fun GymRowItem(gym: Gym) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp),
-        elevation = 2.dp,
-        shape = RoundedCornerShape(12.dp),
-        backgroundColor = Color.White
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxSize().clickable(onClick = onClick),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "Location",
-                tint = Color(0xFF2196F3),
-                modifier = Modifier.size(20.dp)
+                painter = painterResource(id = getMuscleGroupIcon(name)),
+                contentDescription = name,
+                tint = Color.Unspecified, // Sửa ở đây
+                modifier = Modifier.size(36.dp)
             )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Text(
-                text = gym.name,
-                modifier = Modifier.weight(1f),
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = Color.Black
-            )
-
-            Text(
-                text = gym.distance,
-                fontSize = 13.sp,
-                color = Color(0xFF666666),
-                fontWeight = FontWeight.Medium
-            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = name, color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 14.sp)
         }
     }
 }
 
 @Composable
-fun MapImage(contentDescription: String) {
+fun WorkoutCard(workout: Workout, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(16.dp)
+            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFE8E8E8))
+        Row(
+            modifier = Modifier.height(130.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.sample_map),
-                contentDescription = contentDescription,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Box(
+            AsyncImage(
+                model = workout.imageUrl,
+                contentDescription = workout.name,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                modifier = Modifier.padding(16.dp).fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Card(
-                    backgroundColor = Color.White,
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
+                Column {
                     Text(
-                        text = "Bản đồ phòng gym",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
+                        text = workout.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        maxLines = 1
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Độ khó: ${workout.difficulty}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+
+                Row {
+                    workout.targets.take(2).forEach {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
                 }
             }
         }
     }
 }
-
-data class MuscleGroup(val name: String, val imageRes: Int)
-
-data class Gym(val name: String, val distance: String)
-
-val gymList = listOf(
-    Gym("Saigon Sports Club", "600m"),
-    Gym("Fit24 - Fitness", "850m"),
-    Gym("The New Gym", "1.2km"),
-    Gym("Transform GYM", "1.7km"),
-    Gym("CityGym", "2.5km"),
-    Gym("FTC Fitness", "3km"),
-    Gym("Ways Station Gym", "3.9km")
-)
