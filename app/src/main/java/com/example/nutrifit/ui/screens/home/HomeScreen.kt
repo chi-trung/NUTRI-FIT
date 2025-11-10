@@ -1,100 +1,71 @@
+
 package com.example.nutrifit.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import com.example.nutrifit.R
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Button
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.navigation.navOptions
-import android.R.attr.onClick
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.navigation.NavController
-import com.example.nutrifit.ui.navigation.NavRoutes
-import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
+import androidx.navigation.NavController
+import com.example.nutrifit.R
+import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.ui.screens.meal.MealCard
-import com.example.nutrifit.viewmodel.HomeViewModel
-import com.example.nutrifit.viewmodel.UserState
 import com.example.nutrifit.viewmodel.DailyIntakeState
+import com.example.nutrifit.viewmodel.HomeViewModel
 import com.example.nutrifit.viewmodel.MealsState
-import androidx.compose.material3.CircularProgressIndicator
-
+import com.example.nutrifit.viewmodel.UserState
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    val homeViewModel: HomeViewModel = viewModel()
-    val userState by homeViewModel.userState.collectAsState()
-    val dailyIntakeState by homeViewModel.dailyIntakeState.collectAsState()
-    val suggestedMealsState by homeViewModel.suggestedMealsState.collectAsState()
+    val viewModel: HomeViewModel = viewModel()
+    val userState by viewModel.userState.collectAsState()
+    val dailyIntakeState by viewModel.dailyIntakeState.collectAsState()
+    val suggestedMealsState by viewModel.suggestedMealsState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF0F1F3))
-            .padding(WindowInsets.statusBars.asPaddingValues())
-    )
-    {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color(0xFFFAFAFA)
+    ) { paddingValues ->
         LazyColumn(
-            state = listState,
             modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            item { 
+            item {
                 // Header Section
                 Box() {
                     Image(
@@ -203,14 +174,13 @@ fun HomeScreen(navController: NavController) {
                                 }
                             }
 
-                            val (caloriesConsumed, calorieGoal) = when {
-                                userState is UserState.Success && dailyIntakeState is DailyIntakeState.Success -> {
-                                    val user = (userState as UserState.Success).user
-                                    val intake = (dailyIntakeState as DailyIntakeState.Success).intake
-                                    (intake?.getTotalCalories() ?: 0) to (user.calorieGoal ?: 2000)
-                                }
-                                else -> 0 to 2000
-                            }
+                            val dailyIntake = (dailyIntakeState as? DailyIntakeState.Success)?.intake
+                            val user = (userState as? UserState.Success)?.user
+
+                            val caloriesConsumed = dailyIntake?.getTotalCaloriesConsumed() ?: 0
+                            val caloriesBurned = dailyIntake?.getTotalCaloriesBurned() ?: 0
+                            val netCalories = dailyIntake?.getNetCalories() ?: 0
+                            val calorieGoal = user?.calorieGoal ?: 2000
 
                             val progress = if (calorieGoal > 0) (caloriesConsumed.toFloat() / calorieGoal.toFloat()).coerceIn(0f, 1f) else 0f
                             val progressPercentage = (progress * 100).toInt()
@@ -221,10 +191,22 @@ fun HomeScreen(navController: NavController) {
                             }
 
                             Spacer(modifier = Modifier.height(20.dp))
-                            Row() {
-                                Text("Đã đạt: $caloriesConsumed", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.weight(1f))
-                                Text("$progressPercentage%", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Column(Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Hấp thụ: $caloriesConsumed cal", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                    Text("$progressPercentage%", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Luyện tập: $caloriesBurned cal", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                    Text("Tổng: $netCalories cal", fontSize = 13.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+                                }
                             }
 
                             Spacer(modifier = Modifier .height(20.dp))

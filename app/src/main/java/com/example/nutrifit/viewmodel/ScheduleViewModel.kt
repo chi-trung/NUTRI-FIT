@@ -5,7 +5,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.data.model.CompletedWorkout
+import com.example.nutrifit.data.model.ConsumedWorkout
 import com.example.nutrifit.data.model.Exercise
+import com.example.nutrifit.data.repository.DailyIntakeRepository
 import com.example.nutrifit.data.repository.ExerciseRepository
 import com.example.nutrifit.data.repository.WorkoutCompletionRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -13,9 +15,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.threeten.bp.DateTimeUtils
 import org.threeten.bp.DayOfWeek
 import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
+import java.util.Date
+import java.util.UUID
 
 // Lớp dữ liệu cho lịch trình hàng ngày, sử dụng Exercise từ model
 data class DailySchedule(
@@ -41,6 +46,7 @@ class ScheduleViewModel : ViewModel() {
 
     private val workoutCompletionRepository = WorkoutCompletionRepository()
     private val exerciseRepository = ExerciseRepository()
+    private val dailyIntakeRepository = DailyIntakeRepository() // Thêm repository
     private val auth = FirebaseAuth.getInstance()
 
     private val _scheduleState = MutableStateFlow<ScheduleState>(ScheduleState.Loading)
@@ -49,11 +55,9 @@ class ScheduleViewModel : ViewModel() {
     private val _completionState = MutableStateFlow<CompletionState>(CompletionState.Idle)
     val completionState: StateFlow<CompletionState> = _completionState.asStateFlow()
 
-    // *** THAY ĐỔI 1: Lưu trữ danh sách toàn bộ bài tập ***
     private var allExercises: List<Exercise> = emptyList()
 
     init {
-        // Tải toàn bộ bài tập một lần duy nhất khi ViewModel được tạo
         loadAllExercises()
     }
 
@@ -62,7 +66,6 @@ class ScheduleViewModel : ViewModel() {
             _scheduleState.value = ScheduleState.Loading
             exerciseRepository.getAllExercises().onSuccess { exercises ->
                 allExercises = exercises
-                // Sau khi có danh sách bài tập, tạo lịch cho tuần hiện tại
                 updateScheduleForDate(LocalDate.now())
             }.onFailure {
                 _scheduleState.value = ScheduleState.Error(it.message ?: "Lỗi khi tải bài tập")
@@ -70,17 +73,12 @@ class ScheduleViewModel : ViewModel() {
         }
     }
 
-    // *** THAY ĐỔI 2: Hàm public để giao diện gọi khi chuyển tuần ***
     fun updateScheduleForDate(date: LocalDate) {
-        // Nếu chưa có danh sách bài tập thì không làm gì
         if (allExercises.isEmpty()) return
 
         viewModelScope.launch {
-            // Tạo lịch cho tuần được yêu cầu
             val weeklySchedules = generateWeekSchedule(date)
-            // Đồng bộ trạng thái hoàn thành cho tuần đó
             syncScheduleState(weeklySchedules)
-            // Cập nhật giao diện
             _scheduleState.value = ScheduleState.Success(weeklySchedules)
         }
     }
@@ -163,12 +161,31 @@ class ScheduleViewModel : ViewModel() {
                 )
                 workoutCompletionRepository.markWorkoutAsComplete(userId, completedWorkout).onSuccess {
                     _completionState.value = CompletionState.Success("Đã hoàn thành: ${exercise.name}")
+
+                    // Thêm vào nhật ký DailyIntake
+                    val consumedWorkout = ConsumedWorkout(
+                        id = UUID.randomUUID().toString(),
+                        name = exercise.name,
+                        caloriesBurned = 150, // Ước tính calo, sẽ cải thiện sau
+                        timestamp = System.currentTimeMillis()
+                    )
+                    viewModelScope.launch {
+                        dailyIntakeRepository.addConsumedWorkout(userId, consumedWorkout)
+                    }
+
                 }.onFailure {
                     _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi lưu")
                 }
             } else {
                 workoutCompletionRepository.unmarkWorkoutAsComplete(userId, exercise.name, date).onSuccess {
                     _completionState.value = CompletionState.Success("Đã bỏ hoàn thành: ${exercise.name}")
+
+                    // Xóa khỏi nhật ký DailyIntake
+                     viewModelScope.launch {
+                         val toDate = DateTimeUtils.toDate(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                        dailyIntakeRepository.removeConsumedWorkoutByName(userId, exercise.name, toDate)
+                    }
+
                 }.onFailure {
                     _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi bỏ lưu")
                 }
