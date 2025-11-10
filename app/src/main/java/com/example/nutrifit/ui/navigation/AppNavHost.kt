@@ -15,8 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.components.BottomNavBar
 import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
-import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
-import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen2
+//import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
+//import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen2
 import com.example.nutrifit.ui.screens.home.HomeScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen
 import com.example.nutrifit.ui.screens.login.LoginScreen2
@@ -73,7 +73,7 @@ fun AppNavHost() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Workout, // *** SỬA LỖI: Đặt Workout làm màn hình bắt đầu ***
+            startDestination = NavRoutes.Home,
             modifier = Modifier // Xóa padding ở đây để cho phép màn hình con kiểm soát
         ) {
             composable(NavRoutes.Onboarding) {
@@ -136,33 +136,35 @@ fun AppNavHost() {
                 )
             }
 
-            composable(NavRoutes.ForgotPw) {
-                ForgotPasswordScreen(
-                    onBackToLogin = {
-                        navController.navigate(NavRoutes.Login) {
-                            popUpTo(NavRoutes.ForgotPw) { inclusive = true }
-                        }
-                    },
-                    onGoToResetPassword = {
-                        navController.navigate(NavRoutes.ForgotPw2)
-                    }
-                )
-            }
-
-            composable(NavRoutes.ForgotPw2) {
-                ForgotPasswordScreen2(
-                    onBackToLogin = {
-                        navController.navigate(NavRoutes.Login) {
-                            popUpTo(NavRoutes.Login) { inclusive = true }
-                        }
-                    },
-                    onSuccessReset = {
-                        navController.navigate(NavRoutes.Login) {
-                            popUpTo(NavRoutes.Login) { inclusive = true }
-                        }
-                    }
-                )
-            }
+            // Dang phat trien
+            
+//            composable(NavRoutes.ForgotPw) {
+//                ForgotPasswordScreen(
+//                    onBackToLogin = {
+//                        navController.navigate(NavRoutes.Login) {
+//                            popUpTo(NavRoutes.ForgotPw) { inclusive = true }
+//                        }
+//                    },
+//                    onGoToResetPassword = {
+//                        navController.navigate(NavRoutes.ForgotPw2)
+//                    }
+//                )
+//            }
+//
+//            composable(NavRoutes.ForgotPw2) {
+//                ForgotPasswordScreen2(
+//                    onBackToLogin = {
+//                        navController.navigate(NavRoutes.Login) {
+//                            popUpTo(NavRoutes.Login) { inclusive = true }
+//                        }
+//                    },
+//                    onSuccessReset = {
+//                        navController.navigate(NavRoutes.Login) {
+//                            popUpTo(NavRoutes.Login) { inclusive = true }
+//                        }
+//                    }
+//                )
+//            }
 
             composable(NavRoutes.Profile) {
                 ProfileScreen(
@@ -232,7 +234,7 @@ fun AppNavHost() {
             }
 
             composable(NavRoutes.Schedule) {
-                ScheduleScreen(onBackClick = { navController.popBackStack() })
+                ScheduleScreen(navController = navController, onBackClick = { navController.popBackStack() })
             }
         }
     }
