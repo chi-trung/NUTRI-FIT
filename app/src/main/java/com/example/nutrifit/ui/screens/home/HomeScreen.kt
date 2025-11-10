@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +49,14 @@ import com.example.nutrifit.viewmodel.DailyIntakeState
 import com.example.nutrifit.viewmodel.HomeViewModel
 import com.example.nutrifit.viewmodel.MealsState
 import com.example.nutrifit.viewmodel.UserState
+import java.util.Calendar
+
+// Data class for weekly chart
+data class WeeklyData(
+    val day: String,
+    val caloriesConsumed: Float,
+    val caloriesBurned: Float
+)
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -132,11 +141,11 @@ fun HomeScreen(navController: NavController) {
                             contentDescription = "khung muc tieu",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(420.dp),
+                                .height(450.dp), // Adjusted height for legend
                             contentScale = ContentScale.Crop
                         )
                         Column(modifier = Modifier.fillMaxWidth().padding(top = 20.dp, start = 20.dp, end = 20.dp)) {
-                             Row(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -196,15 +205,15 @@ fun HomeScreen(navController: NavController) {
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Hấp thụ: $caloriesConsumed cal", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                                    Text("$progressPercentage%", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                    Text("Hấp thụ: $caloriesConsumed cal", fontSize = 13.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                                    Text("$progressPercentage%", fontSize = 13.sp, color = Color.Black, fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Luyện tập: $caloriesBurned cal", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                                    Text("Luyện tập: $caloriesBurned cal", fontSize = 13.sp, color = Color.Red, fontWeight = FontWeight.Bold)
                                     Text("Tổng: $netCalories cal", fontSize = 13.sp, color = Color.Black, fontWeight = FontWeight.Bold)
                                 }
                             }
@@ -212,10 +221,51 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier .height(20.dp))
                             Text("Tiến trình hàng tuần", fontSize = 17.sp, color = Color.Black)
 
-                            // Weekly progress chart (static for now)
+                            // Weekly progress chart
                             Spacer(modifier = Modifier.height(6.dp))
-                            Box(modifier = Modifier.fillMaxWidth().height(180.dp).background(Color.White, RoundedCornerShape(20.dp)).padding(10.dp)) {
-                                // Static chart content
+                            Box(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(20.dp)).padding(10.dp)) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    val calendar = Calendar.getInstance()
+                                    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+
+                                    val daysInWeek = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
+                                    val dayIndex = when (dayOfWeek) {
+                                        Calendar.MONDAY -> 0
+                                        Calendar.TUESDAY -> 1
+                                        Calendar.WEDNESDAY -> 2
+                                        Calendar.THURSDAY -> 3
+                                        Calendar.FRIDAY -> 4
+                                        Calendar.SATURDAY -> 5
+                                        Calendar.SUNDAY -> 6
+                                        else -> -1
+                                    }
+
+                                    val weeklyData = daysInWeek.mapIndexed { index, day ->
+                                        if (index == dayIndex) {
+                                            WeeklyData(day, caloriesConsumed.toFloat(), caloriesBurned.toFloat())
+                                        } else {
+                                            WeeklyData(day, 0f, 0f)
+                                        }
+                                    }
+                                    WeeklyProgressChart(weeklyData = weeklyData, calorieGoal = calorieGoal)
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Legend
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(modifier = Modifier.size(12.dp).background(Color(0xFF4CAF50), RoundedCornerShape(2.dp)))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Hấp thụ", fontSize = 12.sp, color = Color.Black)
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Box(modifier = Modifier.size(12.dp).background(Color.Red, RoundedCornerShape(2.dp)))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Luyện tập", fontSize = 12.sp, color = Color.Black)
+                                    }
+                                }
                             }
                         }
                     }
@@ -260,7 +310,7 @@ fun HomeScreen(navController: NavController) {
                         } else {
                             Row(
                                 modifier = Modifier.horizontalScroll(rememberScrollState())
-                                                 .padding(horizontal = 16.dp)
+                                    .padding(horizontal = 16.dp)
                             ) {
                                 state.meals.forEach { meal ->
                                     MealCard(meal = meal) {
@@ -273,9 +323,9 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
-             item {
-                 Spacer(modifier = Modifier.height(100.dp))
-             }
+            item {
+                Spacer(modifier = Modifier.height(100.dp))
+            }
         }
     }
 }
@@ -291,6 +341,89 @@ fun ActionButton(navController: NavController, route: String, iconRes: Int, labe
             Image(painter = painterResource(id = iconRes), contentDescription = label, modifier = Modifier.size(45.dp))
             Spacer(modifier = Modifier.height(6.dp))
             Text(label, fontSize = 11.sp, color = Color.Black)
+        }
+    }
+}
+
+@Composable
+fun WeeklyProgressChart(weeklyData: List<WeeklyData>, calorieGoal: Int) {
+    val maxCalories = calorieGoal.toFloat().takeIf { it > 0 } ?: 2000f
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .padding(top = 10.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        weeklyData.forEach { data ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .height(120.dp)
+                        .width(30.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    // Full-height gray background
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(4.dp))
+                    )
+
+                    val totalCalories = data.caloriesConsumed + data.caloriesBurned
+                    if (totalCalories > 0f) {
+                        val totalHeight = ((totalCalories / maxCalories) * 120f).coerceAtMost(120f).dp
+                        val consumedPortion = if (totalCalories > 0) data.caloriesConsumed / totalCalories else 0f
+
+                        val consumedHeight = totalHeight * consumedPortion
+                        val burnedHeight = totalHeight * (1f - consumedPortion)
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom,
+                            modifier = Modifier.fillMaxHeight()
+                        ) {
+                            // Consumed (Green)
+                            if (consumedHeight > 0.dp) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(30.dp)
+                                        .height(consumedHeight)
+                                        .background(
+                                            color = Color(0xFF4CAF50),
+                                            shape = if (burnedHeight <= 0.dp) RoundedCornerShape(4.dp) else RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                                        )
+                                )
+                            }
+                            // Burned (Red)
+                            if (burnedHeight > 0.dp) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(30.dp)
+                                        .height(burnedHeight)
+                                        .background(
+                                            color = Color.Red,
+                                            shape = if (consumedHeight <= 0.dp) RoundedCornerShape(4.dp) else RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp)
+                                        )
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = data.day,
+                    fontSize = 12.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
