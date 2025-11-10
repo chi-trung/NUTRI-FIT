@@ -75,59 +75,57 @@ fun ScheduleScreen(onBackClick: () -> Unit) {
                 Text(text = state.message, modifier = Modifier.align(Alignment.Center))
             }
             is ScheduleState.Success -> {
-                // Truyền onBackClick vào đây
-                ScheduleContent(schedules = state.schedules, viewModel = viewModel, onBackClick = onBackClick)
+                ScheduleContent(schedules = state.schedules, viewModel = viewModel)
+            }
+        }
+
+        // *** SỬA LỖI: Nút quay lại được đặt ở đây (cố định) với padding lớn hơn ***
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 40.dp, start = 16.dp) // Tăng padding top
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White)
+                .clickable { onBackClick() }
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Quay lại",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Quay lại",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF4CAF50)
+                )
             }
         }
     }
 }
 
 @Composable
-fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel, onBackClick: () -> Unit) {
+fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val today = LocalDate.now()
 
-    val currentWeekSchedules = remember(selectedDate, schedules) {
-        val startOfWeek = selectedDate.with(DayOfWeek.MONDAY)
-        schedules.filter { !it.date.isBefore(startOfWeek) && it.date.isBefore(startOfWeek.plusWeeks(1)) }
+    LaunchedEffect(key1 = selectedDate) {
+        viewModel.updateScheduleForDate(selectedDate)
     }
 
-    val todaySchedule = currentWeekSchedules.find { it.date == selectedDate }
+    val todaySchedule = schedules.find { it.date == selectedDate }
     val dateFormatter = DateTimeFormatter.ofPattern("dd - MM - yyyy", Locale.getDefault())
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally // Căn giữa các item trong LazyColumn
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // *** THAY ĐỔI 1: Nút quay lại được đưa vào trong LazyColumn ***
-        item {
-            Box(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp)) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart) // Căn lề trái
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .clickable { onBackClick() }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Quay lại",
-                            tint = Color(0xFF4CAF50),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Quay lại",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF4CAF50)
-                        )
-                    }
-                }
-            }
-        }
+        // Khoảng trống đầu danh sách để nội dung không bị nút Quay lại che mất
+        item { Spacer(modifier = Modifier.height(100.dp)) }
 
         item {
             Column(
@@ -145,7 +143,7 @@ fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel
                             selectedDate.minusWeeks(1)
                         }
                     },
-                    weeklySchedules = currentWeekSchedules,
+                    weeklySchedules = schedules,
                     dateFormatter = dateFormatter
                 )
             }
@@ -168,7 +166,7 @@ fun ScheduleContent(schedules: List<DailySchedule>, viewModel: ScheduleViewModel
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     DailyProgressFooter(schedule = it)
                     Spacer(modifier = Modifier.height(16.dp))
-                    WeeklyProgressFooter(weeklySchedules = currentWeekSchedules)
+                    WeeklyProgressFooter(weeklySchedules = schedules)
                 }
             }
         }
@@ -207,9 +205,8 @@ fun ScheduleHeader(
             }
         }
 
-        // *** THAY ĐỔI 2: Box giữ chỗ cho nút "Quay về hôm nay" ***
         Box(modifier = Modifier.height(52.dp).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
-             if (selectedDate != today) {
+            if (selectedDate != today) {
                 Button(
                     onClick = { onDateChanged(today) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800), contentColor = Color.White),
@@ -219,7 +216,7 @@ fun ScheduleHeader(
                 }
             }
         }
-        
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             weeklySchedules.forEach { schedule ->
                 val isScheduleComplete = schedule.exercises.isNotEmpty() && schedule.exercises.all { it.isCompleted }
@@ -229,8 +226,6 @@ fun ScheduleHeader(
     }
 }
 
-
-// --- CÁC HÀM COMPOSABLE KHÁC GIỮ NGUYÊN (ScheduleDetailsCard, DayItemNew, ExerciseItem, ...) ---
 
 @Composable
 fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel) {
@@ -328,8 +323,8 @@ fun ExerciseItem(exercise: Exercise, onCheckedChange: (Boolean) -> Unit) {
             Text(text = exercise.description, fontSize = 14.sp, color = Color.Gray, maxLines = 2)
         }
         Checkbox(
-            checked = exercise.isCompleted, 
-            onCheckedChange = onCheckedChange, 
+            checked = exercise.isCompleted,
+            onCheckedChange = onCheckedChange,
             colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50), uncheckedColor = Color.Gray)
         )
     }
