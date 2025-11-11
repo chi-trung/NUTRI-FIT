@@ -14,6 +14,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.components.BottomNavBar
+import com.example.nutrifit.ui.screens.ScanScreen.ScanScreen
 import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
 //import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen
 //import com.example.nutrifit.ui.screens.forgotpw.ForgotPasswordScreen2
@@ -235,6 +236,9 @@ fun AppNavHost() {
 
             composable(NavRoutes.Schedule) {
                 ScheduleScreen(navController = navController, onBackClick = { navController.popBackStack() })
+            }
+            composable(NavRoutes.Scan) {
+                ScanScreen(navController)
             }
         }
     }
