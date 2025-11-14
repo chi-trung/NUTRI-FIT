@@ -6,6 +6,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -32,6 +33,7 @@ import com.example.nutrifit.ui.screens.setting.SettingScreen // dang làm setti
 import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutDetailScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
+import com.example.nutrifit.viewmodel.SettingViewModel
 
 
 @Composable
@@ -138,7 +140,7 @@ fun AppNavHost() {
             }
 
             // Dang phat trien
-            
+
 //            composable(NavRoutes.ForgotPw) {
 //                ForgotPasswordScreen(
 //                    onBackToLogin = {
@@ -176,11 +178,11 @@ fun AppNavHost() {
             }
 
             composable(NavRoutes.Setting) {
+                val settingViewModel: SettingViewModel = viewModel()
                 SettingScreen(
                     onBackClick = { navController.popBackStack() },
-                    onSaveChanges = { name, email, phone ->
-                    },
-                    navController = navController
+                    navController = navController,
+                    viewModel = settingViewModel
                 )
             }
 
