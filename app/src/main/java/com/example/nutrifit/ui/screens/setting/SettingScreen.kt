@@ -647,7 +647,7 @@ fun SettingScreen(
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Image(
-                                                    painter = painterResource(id = R.drawable.icon_email),
+                                                    painter = painterResource(id = R.drawable.ic_email),
                                                     contentDescription = "Email Icon",
                                                     modifier = Modifier
                                                         .size(40.dp)
