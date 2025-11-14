@@ -1,121 +1,67 @@
 package com.example.nutrifit.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nutrifit.data.repository.SettingsRepository
+import com.example.nutrifit.data.model.User
+import com.example.nutrifit.data.repository.UserRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class SettingViewModel(application: Application) : AndroidViewModel(application) {
+sealed class SettingUiState {
+    object Loading : SettingUiState()
+    data class Success(val user: User, val providers: List<String>) : SettingUiState()
+    data class Error(val message: String) : SettingUiState()
+}
 
-    private val repository = SettingsRepository(application)
+class SettingViewModel : ViewModel() {
 
-    // State for settings
-    private val _language = MutableStateFlow("Tiếng Việt")
-    val language: StateFlow<String> = _language.asStateFlow()
+    private val userRepository = UserRepository()
+    private val auth = FirebaseAuth.getInstance()
 
-    private val _units = MutableStateFlow("kg / cm")
-    val units: StateFlow<String> = _units.asStateFlow()
-
-    private val _notificationsEnabled = MutableStateFlow(false)
-    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
-
-    private val _twoFactorAuth = MutableStateFlow(false)
-    val twoFactorAuth: StateFlow<Boolean> = _twoFactorAuth.asStateFlow()
-
-    // Loading and error states
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _uiState = MutableStateFlow<SettingUiState>(SettingUiState.Loading)
+    val uiState: StateFlow<SettingUiState> = _uiState
 
     init {
-        loadSettings()
+        fetchUserData()
     }
 
-    fun loadSettings() {
-        _isLoading.value = true
-        val settings = repository.getSettings()
-        _language.value = settings["language"] as String
-        _units.value = settings["units"] as String
-        _notificationsEnabled.value = settings["notifications"] as Boolean
-        _twoFactorAuth.value = settings["twoFactor"] as Boolean
-        _isLoading.value = false
-    }
-
-    fun updateLanguage(newLanguage: String) {
-        _language.value = newLanguage
-        saveSettings()
-    }
-
-    fun updateUnits(newUnits: String) {
-        _units.value = newUnits
-        saveSettings()
-    }
-
-    fun updateNotifications(enabled: Boolean) {
-        _notificationsEnabled.value = enabled
-        saveSettings()
-    }
-
-    fun updateTwoFactor(enabled: Boolean) {
-        _twoFactorAuth.value = enabled
-        saveSettings()
-    }
-
-    private fun saveSettings() {
+    fun fetchUserData() {
         viewModelScope.launch {
-            try {
-                repository.saveSettings(
-                    _language.value,
-                    _units.value,
-                    _notificationsEnabled.value,
-                    _twoFactorAuth.value
+            _uiState.value = SettingUiState.Loading
+            val firebaseUser = auth.currentUser
+            if (firebaseUser == null) {
+                _uiState.value = SettingUiState.Error("User not logged in")
+                return@launch
+            }
+            val userId = firebaseUser.uid
+            val providerIds = firebaseUser.providerData.map { it.providerId }
+
+            val result = userRepository.getUser(userId)
+            _uiState.value = result.fold(
+                onSuccess = { user -> SettingUiState.Success(user, providerIds) },
+                onFailure = { exception -> SettingUiState.Error(exception.message ?: "Failed to fetch user data") }
+            )
+        }
+    }
+
+    fun saveUserData(
+        name: String,
+        email: String
+    ) {
+        viewModelScope.launch {
+            val currentUiState = _uiState.value
+            if (currentUiState is SettingUiState.Success) {
+                val updatedUser = currentUiState.user.copy(
+                    name = name,
+                    email = email
                 )
-                _errorMessage.value = null
-            } catch (e: Exception) {
-                _errorMessage.value = "Lỗi khi lưu cài đặt: ${e.message}"
+                userRepository.saveUser(updatedUser).fold(
+                    onSuccess = { _uiState.value = SettingUiState.Success(updatedUser, currentUiState.providers) },
+                    onFailure = { exception -> _uiState.value = SettingUiState.Error(exception.message ?: "Failed to save user data") }
+                )
             }
         }
-    }
-
-    fun saveUserInfo(fullName: String, email: String, phone: String) {
-        // This could be extended to save additional user info if needed
-        // For now, it's a placeholder for the onSaveChanges callback in SettingScreen
-        _isLoading.value = true
-        viewModelScope.launch {
-            try {
-                // Assuming we extend repository to save email/phone
-                // repository.saveAdditionalUserInfo(fullName, email, phone)
-                _errorMessage.value = null
-            } catch (e: Exception) {
-                _errorMessage.value = "Lỗi khi lưu thông tin: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun changePassword(oldPassword: String, newPassword: String) {
-        // Placeholder for password change logic
-        if (newPassword.length < 6) {
-            _errorMessage.value = "Mật khẩu phải có ít nhất 6 ký tự"
-            return
-        }
-        // Implement actual password change
-        _errorMessage.value = "Tính năng đổi mật khẩu chưa được implement"
-    }
-
-    fun deleteAccount() {
-        // Placeholder for account deletion
-        _errorMessage.value = "Tính năng xóa tài khoản chưa được implement"
-    }
-
-    fun clearError() {
-        _errorMessage.value = null
     }
 }
