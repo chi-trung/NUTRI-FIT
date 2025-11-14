@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.R
+import com.example.nutrifit.data.model.DailyIntake
 import com.example.nutrifit.data.model.Meal
 import com.example.nutrifit.data.repository.DailyIntakeRepository
 import com.example.nutrifit.data.repository.ExerciseRepository
@@ -32,6 +33,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _dailyIntakeState = MutableStateFlow<DailyIntakeState>(DailyIntakeState.Loading)
     val dailyIntakeState: StateFlow<DailyIntakeState> = _dailyIntakeState
 
+    private val _weeklyIntakeState = MutableStateFlow<List<DailyIntake>>(emptyList())
+    val weeklyIntakeState: StateFlow<List<DailyIntake>> = _weeklyIntakeState
+
     private val _suggestedMealsState = MutableStateFlow<MealsState>(MealsState.Loading)
     val suggestedMealsState: StateFlow<MealsState> = _suggestedMealsState
 
@@ -46,6 +50,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refresh() {
         fetchUserDataAndSuggestions()
+        listenForDailyIntakeChanges()
     }
 
     private fun fetchUserDataAndSuggestions() {
@@ -81,15 +86,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val firebaseUser = auth.currentUser
             if (firebaseUser != null) {
                 val calendar = Calendar.getInstance()
-                val today = Date()
-                calendar.time = today
-                val startOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
-                val endOfDay = calendar.apply { set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59) }.time
+                calendar.firstDayOfWeek = Calendar.MONDAY
+                calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                val startOfWeek = calendar.apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
 
-                dailyIntakeRepository.getIntakeForDateRange(firebaseUser.uid, startOfDay, endOfDay).collect { result ->
-                    result.onSuccess { dailyIntakeList ->
-                        // The flow now returns a list, for the home screen we only need the first (and likely only) item.
-                        _dailyIntakeState.value = DailyIntakeState.Success(dailyIntakeList.firstOrNull())
+                calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+                val endOfWeek = calendar.apply { set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59) }.time
+
+                dailyIntakeRepository.getIntakeForDateRange(firebaseUser.uid, startOfWeek, endOfWeek).collect { result ->
+                    result.onSuccess { weeklyIntakes ->
+                        _weeklyIntakeState.value = weeklyIntakes
+                        val todayIntake = weeklyIntakes.find { it.date?.let { date -> isSameDay(date, Date()) } ?: false }
+                        _dailyIntakeState.value = DailyIntakeState.Success(todayIntake)
                     }.onFailure { exception ->
                         _dailyIntakeState.value = DailyIntakeState.Error(exception.message ?: "Failed to fetch daily intake.")
                     }
@@ -99,6 +107,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val cal1 = Calendar.getInstance().apply { time = date1 }
+        val cal2 = Calendar.getInstance().apply { time = date2 }
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
 
     private fun fetchMealSuggestions(goal: String) {
         viewModelScope.launch {

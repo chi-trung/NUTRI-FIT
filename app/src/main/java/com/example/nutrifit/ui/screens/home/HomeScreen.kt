@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.nutrifit.R
+import com.example.nutrifit.data.model.DailyIntake
 import com.example.nutrifit.data.model.Exercise
 import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.navigation.NavRoutes
@@ -68,6 +69,7 @@ fun HomeScreen(navController: NavController) {
     val viewModel: HomeViewModel = viewModel()
     val userState by viewModel.userState.collectAsState()
     val dailyIntakeState by viewModel.dailyIntakeState.collectAsState()
+    val weeklyIntakeState by viewModel.weeklyIntakeState.collectAsState()
     val suggestedMealsState by viewModel.suggestedMealsState.collectAsState()
     val suggestedExercisesState by viewModel.suggestedExercisesState.collectAsState()
     val context = LocalContext.current
@@ -233,27 +235,29 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(20.dp)).padding(10.dp)) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    val calendar = Calendar.getInstance()
-                                    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-
                                     val daysInWeek = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
-                                    val dayIndex = when (dayOfWeek) {
-                                        Calendar.MONDAY -> 0
-                                        Calendar.TUESDAY -> 1
-                                        Calendar.WEDNESDAY -> 2
-                                        Calendar.THURSDAY -> 3
-                                        Calendar.FRIDAY -> 4
-                                        Calendar.SATURDAY -> 5
-                                        Calendar.SUNDAY -> 6
-                                        else -> -1
-                                    }
-
-                                    val weeklyData = daysInWeek.mapIndexed { index, day ->
-                                        if (index == dayIndex) {
-                                            WeeklyData(day, caloriesConsumed.toFloat(), caloriesBurned.toFloat())
-                                        } else {
-                                            WeeklyData(day, 0f, 0f)
+                                    val weeklyData = daysInWeek.map { dayString ->
+                                        val calendar = Calendar.getInstance()
+                                        calendar.firstDayOfWeek = Calendar.MONDAY
+                                        val dayOfWeek = when (dayString) {
+                                            "T2" -> Calendar.MONDAY
+                                            "T3" -> Calendar.TUESDAY
+                                            "T4" -> Calendar.WEDNESDAY
+                                            "T5" -> Calendar.THURSDAY
+                                            "T6" -> Calendar.FRIDAY
+                                            "T7" -> Calendar.SATURDAY
+                                            "CN" -> Calendar.SUNDAY
+                                            else -> -1
                                         }
+                                        val intakeForDay = weeklyIntakeState.find { intake ->
+                                            calendar.time = intake.date
+                                            calendar.get(Calendar.DAY_OF_WEEK) == dayOfWeek
+                                        }
+                                        WeeklyData(
+                                            day = dayString,
+                                            caloriesConsumed = intakeForDay?.getTotalCaloriesConsumed()?.toFloat() ?: 0f,
+                                            caloriesBurned = intakeForDay?.getTotalCaloriesBurned()?.toFloat() ?: 0f
+                                        )
                                     }
                                     WeeklyProgressChart(weeklyData = weeklyData, calorieGoal = calorieGoal)
 
