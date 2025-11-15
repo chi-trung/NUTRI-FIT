@@ -44,6 +44,7 @@ import com.example.nutrifit.viewmodel.SettingViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.FirebaseAuth // ✅ THÊM IMPORT NÀY
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -842,7 +843,7 @@ fun SettingScreen(
                                 }
                             }
 
-                            // PHẦN 6: ĐĂNG XUẤT - THÊM MỚI
+                            // PHẦN 6: ĐĂNG XUẤT
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -854,16 +855,13 @@ fun SettingScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
-                                val context = LocalContext.current
-
                                 Button(
                                     onClick = {
-                                        // Xóa dữ liệu đăng nhập
-                                        val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                                        sharedPref.edit().clear().apply()
+                                        // ✅ CHỈ cần signOut Firebase
+                                        FirebaseAuth.getInstance().signOut()
 
-                                        // Điều hướng về trang đăng nhập
-                                        navController?.navigate("login") {
+                                        // Navigate về Login và xóa toàn bộ back stack
+                                        navController?.navigate(NavRoutes.Login) {
                                             popUpTo(0) { inclusive = true }
                                         }
                                     },
