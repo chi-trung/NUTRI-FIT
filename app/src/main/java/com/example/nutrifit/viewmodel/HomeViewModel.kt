@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.DailyIntake
+import com.example.nutrifit.data.model.Exercise
 import com.example.nutrifit.data.model.Meal
 import com.example.nutrifit.data.repository.DailyIntakeRepository
 import com.example.nutrifit.data.repository.ExerciseRepository
@@ -128,15 +129,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun fetchExerciseSuggestions(goal: String) {
-        val targets = goal.split("/").map { it.trim() }
         viewModelScope.launch {
-            exerciseRepository.getExercisesByTargets(targets).onSuccess { exercises ->
-                _suggestedExercisesState.value = SuggestedExercisesState.Success(exercises)
+            val userTargets = goal.split("/").map { it.trim() }
+
+            // Lấy danh sách bài tập dựa trên mục tiêu của người dùng
+            exerciseRepository.getExercisesByTargets(userTargets).onSuccess { userGoalExercises ->
+                if (userGoalExercises.isNotEmpty()) {
+                    _suggestedExercisesState.value = SuggestedExercisesState.Success(userGoalExercises)
+                } else {
+                    // Nếu không có, lấy các bài tập cho các mục tiêu chung
+                    val defaultTargets = listOf("Giảm cân", "Tăng cơ")
+                    exerciseRepository.getExercisesByTargets(defaultTargets).onSuccess { defaultExercises ->
+                        _suggestedExercisesState.value = SuggestedExercisesState.Success(defaultExercises)
+                    }.onFailure { e ->
+                        _suggestedExercisesState.value = SuggestedExercisesState.Error(e.message ?: "Failed to fetch default suggestions")
+                    }
+                }
             }.onFailure { e ->
-                _suggestedExercisesState.value = SuggestedExercisesState.Error(e.message ?: "Failed to fetch suggestions")
+                _suggestedExercisesState.value = SuggestedExercisesState.Error(e.message ?: "Failed to fetch user goal suggestions")
             }
         }
     }
+
 
     private fun mapMealImages(meals: List<Meal>): List<Meal> {
         val context = getApplication<Application>().applicationContext
