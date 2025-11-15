@@ -1,30 +1,45 @@
 package com.example.nutrifit.ui.screens.onboarding
 
-import android.R.attr.left
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.nutrifit.R
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.nutrifit.viewmodel.OnboardingViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
@@ -32,34 +47,16 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun OnboardingScreen(onStart: () -> Unit) {
-    val pages = listOf(
-        OnboardingPage(
-            title = "NUTRI - FIT",
-            description = "  Ăn uống lành mạnh\n Luyện tập thông minh",
-            imageRes = R.drawable.logo,
-            titleColor = Color(0xFF1AC9AC)
-        ),
-        OnboardingPage(
-            title = "      Tập luyện hiệu quả\n Video hướng dẫn chi tiết",
-            description = "Chọn nhóm cơ bạn muốn tập và theo dõi các video hướng dẫn bài bản, giúp bạn rèn luyện đúng kỹ thuật và đạt được kết quả mong muốn",
-            imageRes = R.drawable.rectangle_59
-        ),
-        OnboardingPage(
-            title = "    Ăn uống khoa học\n Gợi ý bữa ăn phù hợp",
-            description = "Ứng dụng gợi ý bữa ăn lành mạnh, cân bằng dinh dưỡng và hỗ trợ kiểm soát calo, giúp bạn duy trì năng lượng và cải thiện sức khỏe",
-            imageRes = R.drawable.intro2
-        ),
-        OnboardingPage(
-            title = "               Sống cân bằng\n Lối sống khoẻ mạnh mỗi ngày",
-            description = "Kết hợp tập luyện và dinh dưỡng thông minh để tạo nên một lối sống lành mạnh, tăng cường sức đề kháng và nâng cao chất lượng cuộc sống",
-            imageRes = R.drawable.intro3
-        )
-    )
-
-    val pagerState = rememberPagerState()
+fun OnboardingScreen(onStart: () -> Unit, viewModel: OnboardingViewModel = viewModel()) {
+    val pages by viewModel.pages.collectAsState()
+    val currentPage by viewModel.currentPage.collectAsState()
+    val pagerState = rememberPagerState(initialPage = currentPage)
     val scope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
+
+    LaunchedEffect(pagerState.currentPage) {
+        viewModel.setCurrentPage(pagerState.currentPage)
+    }
 
     Column(
         modifier = Modifier
@@ -70,26 +67,26 @@ fun OnboardingScreen(onStart: () -> Unit) {
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HorizontalPager(count = pages.size, state = pagerState, modifier = Modifier.weight(1f),  userScrollEnabled = pagerState.currentPage != 0) { page ->
-            val data = pages[page]
+        HorizontalPager(
+            count = pages.size,
+            state = pagerState,
+            modifier = Modifier.weight(1f),
+            userScrollEnabled = currentPage != 0
+        ) { pageIndex ->
+            val data = pages[pageIndex]
 
-            if (page > 0) {
+            if (pageIndex > 0) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = WindowInsets.statusBars.asPaddingValues()
-                            .calculateTopPadding())
+                        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                         .offset(y = (-85).dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // --- Phần hình ảnh ---
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                top = WindowInsets.statusBars.asPaddingValues()
-                                    .calculateTopPadding()
-                            ),
+                            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()),
                         contentAlignment = Alignment.TopCenter
                     ) {
                         Image(
@@ -105,7 +102,6 @@ fun OnboardingScreen(onStart: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // --- Thanh tiến trình ---
                     LazyRow(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
@@ -121,10 +117,8 @@ fun OnboardingScreen(onStart: () -> Unit) {
                                     .width(17.dp)
                                     .clip(RoundedCornerShape(3.dp))
                                     .background(
-                                        if (pagerState.currentPage == index + 1)
-                                            colorScheme.primary
-                                        else
-                                            colorScheme.outlineVariant
+                                        if (currentPage == index + 1) colorScheme.primary
+                                        else colorScheme.outlineVariant
                                     )
                             )
                         }
@@ -132,7 +126,6 @@ fun OnboardingScreen(onStart: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(60.dp))
 
-                    // --- Tiêu đề ---
                     Text(
                         text = data.title,
                         style = MaterialTheme.typography.headlineSmall,
@@ -145,7 +138,6 @@ fun OnboardingScreen(onStart: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(40.dp))
 
-                    // --- Mô tả ---
                     Text(
                         text = data.description,
                         style = MaterialTheme.typography.bodyMedium,
@@ -153,13 +145,10 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         lineHeight = 22.sp,
                         color = Color.Black.copy(alpha = 0.85f),
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 }
-            }
-
-            // --- Trang đầu tiên ---
-            if (page == 0) {
+            } else {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
@@ -179,24 +168,9 @@ fun OnboardingScreen(onStart: () -> Unit) {
 
                     Text(
                         text = buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(
-                                    color = Color(0xFF1AC9AC),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            ) { append("NUTRI") }
-                            withStyle(
-                                style = SpanStyle(
-                                    color = colorScheme.onBackground,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            ) { append(" - ") }
-                            withStyle(
-                                style = SpanStyle(
-                                    color = Color.Red,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            ) { append("FIT") }
+                            withStyle(style = SpanStyle(color = Color(0xFF1AC9AC), fontWeight = FontWeight.Bold)) { append("NUTRI") }
+                            withStyle(style = SpanStyle(color = colorScheme.onBackground, fontWeight = FontWeight.Bold)) { append(" - ") }
+                            withStyle(style = SpanStyle(color = Color.Red, fontWeight = FontWeight.Bold)) { append("FIT") }
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         fontSize = 46.sp,
@@ -212,7 +186,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
                         modifier = Modifier.offset(y = 0.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(80.dp))
@@ -224,7 +198,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
                         fontSize = 17.sp,
                         modifier = Modifier.clickable {
                             scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                pagerState.animateScrollToPage(currentPage + 1)
                             }
                         }
                     )
@@ -234,14 +208,14 @@ fun OnboardingScreen(onStart: () -> Unit) {
 
         Spacer(modifier = Modifier.height(0.dp))
 
-        val isLast = pagerState.currentPage == pages.lastIndex
+        val isLast = currentPage == pages.lastIndex
 
-        if (pagerState.currentPage > 0) {
+        if (currentPage > 0) {
             Button(
                 onClick = {
                     if (isLast) onStart()
                     else scope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        pagerState.animateScrollToPage(currentPage + 1)
                     }
                 },
                 colors = if (isLast) {
@@ -286,11 +260,3 @@ fun OnboardingScreen(onStart: () -> Unit) {
         }
     }
 }
-
-data class OnboardingPage(
-    val title: String,
-    val description: String,
-    val imageRes: Int,
-    val logo: Painter? = null,
-    val titleColor: Color = Color.Black
-)
