@@ -15,8 +15,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.example.nutrifit.ui.navigation.AppNavHost
 import com.example.nutrifit.ui.screens.home.HomeScreen
-import com.example.nutrifit.ui.theme.NUTRIFITTheme
-import com.example.nutrifit.ui.theme.NutriFitTheme
+import com.example.nutrifit.theme.NUTRIFITTheme
+import com.example.nutrifit.theme.NutriFitTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

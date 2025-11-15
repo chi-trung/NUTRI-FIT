@@ -20,4 +20,5 @@ object NavRoutes {
     const val Schedule = "schedule"
     const val MealDetail = "mealdetail"
     const val WORKOUT_DETAIL = "workout_detail"
+    const val Terms = "terms"
 }

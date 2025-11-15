@@ -30,6 +30,7 @@ import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.setting.SettingScreen // dang làm setting
+import com.example.nutrifit.ui.screens.terms.TermsOfServiceScreen
 import com.example.nutrifit.ui.screens.target.TargetScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutDetailScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
@@ -224,6 +225,12 @@ fun AppNavHost() {
                 Box(modifier = Modifier.padding(paddingValues)) {
                     MapScreen()
                 }
+            }
+
+
+
+            composable(NavRoutes.Terms) {
+                TermsOfServiceScreen(navController = navController)
             }
 
             composable("${NavRoutes.MealDetail}/{mealId}") { backStackEntry ->

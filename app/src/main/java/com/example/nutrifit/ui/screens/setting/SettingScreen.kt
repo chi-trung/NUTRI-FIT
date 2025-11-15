@@ -38,6 +38,7 @@ import android.widget.Toast
 import androidx.compose.ui.text.TextStyle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.viewmodel.SettingUiState
 import com.example.nutrifit.viewmodel.SettingViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,11 +76,6 @@ fun SettingScreen(
             val goal by remember { mutableStateOf(user.goal ?: "") }
             var twoFactorAuth by remember { mutableStateOf(false) }
             var notificationsEnabled by remember { mutableStateOf(false) }
-
-            var languageExpanded by remember { mutableStateOf(false) }
-            var unitsExpanded by remember { mutableStateOf(false) }
-            var selectedLanguage by remember { mutableStateOf("Tiếng Việt") }
-            var selectedUnits by remember { mutableStateOf("kg / cm") }
 
             Scaffold(
                 content = { paddingValues ->
@@ -187,68 +183,6 @@ fun SettingScreen(
                                                 .fillMaxWidth(),
                                             textAlign = TextAlign.Center
                                         )
-                                    }
-
-                                    // Avatar Area
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 16.dp),
-                                        contentAlignment = Alignment.TopCenter
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Box(
-                                                contentAlignment = Alignment.BottomEnd
-                                            ) {
-                                                Image(
-                                                    painter = painterResource(id = R.drawable.ellipse_1),
-                                                    contentDescription = "Profile Image",
-                                                    modifier = Modifier
-                                                        .size(120.dp)
-                                                        .clip(CircleShape)
-                                                        .background(Color.LightGray),
-                                                    contentScale = ContentScale.Crop
-                                                )
-
-                                                // Camera Button
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(36.dp)
-                                                        .clip(CircleShape)
-                                                        .background(Color(0xFF4F66FF))
-                                                        .clickable { /* Handle image change */ }
-                                                        .shadow(4.dp, CircleShape),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.CameraAlt,
-                                                        contentDescription = "Change Photo",
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(8.dp))
-
-                                            // Change Photo Text Button
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(20.dp))
-                                                    .clickable { /* Handle image change */ }
-                                                    .background(Color(0xFF4F66FF).copy(alpha = 0.1f))
-                                            ) {
-                                                Text(
-                                                    text = "Thay đổi ảnh",
-                                                    color = Color(0xFF4F66FF),
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                                )
-                                            }
-                                        }
                                     }
 
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -497,47 +431,7 @@ fun SettingScreen(
                                         modifier = Modifier.padding(vertical = 8.dp)
                                     )
 
-                                    // Block 2: Xác thực 2 bước
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Xác thực 2 bước",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Tăng cường bảo mật cho tài khoản của bạn",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
 
-                                        Switch(
-                                            checked = twoFactorAuth,
-                                            onCheckedChange = { twoFactorAuth = it },
-                                            colors = SwitchDefaults.colors(
-                                                checkedThumbColor = Color(0xFF3B66FF),
-                                                checkedTrackColor = Color(0xFF3B66FF).copy(alpha = 0.5f)
-                                            )
-                                        )
-                                    }
-
-                                    // Divider
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
 
                                     // Block 3: Liên kết tài khoản
                                     Column {
@@ -711,166 +605,6 @@ fun SettingScreen(
                                         )
                                     }
 
-                                    // Block 1: Ngôn ngữ
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Ngôn ngữ",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Chọn ngôn ngữ hiển thị",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        // Dropdown cho Ngôn ngữ
-                                        Box {
-                                            OutlinedButton(
-                                                onClick = { languageExpanded = true },
-                                                shape = RoundedCornerShape(10.dp),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    contentColor = Color(0xFF1A1A1A),
-                                                    containerColor = Color.White
-                                                ),
-                                                modifier = Modifier
-                                                    .width(140.dp)
-                                                    .height(40.dp)
-                                            ) {
-                                                Text(
-                                                    text = selectedLanguage,
-                                                    fontSize = 14.sp,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                                Icon(
-                                                    Icons.Default.KeyboardArrowDown,
-                                                    contentDescription = "Dropdown",
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                expanded = languageExpanded,
-                                                onDismissRequest = { languageExpanded = false },
-                                                modifier = Modifier.width(140.dp)
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { Text("Tiếng Việt") },
-                                                    onClick = {
-                                                        selectedLanguage = "Tiếng Việt"
-                                                        languageExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("English") },
-                                                    onClick = {
-                                                        selectedLanguage = "English"
-                                                        languageExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    // Divider
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-
-                                    // Block 2: Đơn vị đo lường
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Đơn vị đo lường",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Hệ thống đơn vị đo lường",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        // Dropdown cho Đơn vị đo lường
-                                        Box {
-                                            OutlinedButton(
-                                                onClick = { unitsExpanded = true },
-                                                shape = RoundedCornerShape(10.dp),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    contentColor = Color(0xFF1A1A1A),
-                                                    containerColor = Color.White
-                                                ),
-                                                modifier = Modifier
-                                                    .width(140.dp)
-                                                    .height(40.dp)
-                                            ) {
-                                                Text(
-                                                    text = selectedUnits,
-                                                    fontSize = 14.sp,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                                Icon(
-                                                    Icons.Default.KeyboardArrowDown,
-                                                    contentDescription = "Dropdown",
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-
-                                            DropdownMenu(
-                                                expanded = unitsExpanded,
-                                                onDismissRequest = { unitsExpanded = false },
-                                                modifier = Modifier.width(140.dp)
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { Text("kg / cm") },
-                                                    onClick = {
-                                                        selectedUnits = "kg / cm"
-                                                        unitsExpanded = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("lb / ft") },
-                                                    onClick = {
-                                                        selectedUnits = "lb / ft"
-                                                        unitsExpanded = false
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    // Divider
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-
                                     // Block 3: Thông báo
                                     Row(
                                         modifier = Modifier
@@ -910,141 +644,7 @@ fun SettingScreen(
                                 }
                             }
 
-                            // PHẦN 4: LỊCH SỬ & DỮ LIỆU
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                                    .shadow(
-                                        elevation = 4.dp,
-                                        shape = RoundedCornerShape(16.dp)
-                                    ),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(20.dp)
-                                ) {
-                                    // Section Header - Lịch sử & dữ liệu
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 16.dp)
-                                            .background(
-                                                Color(0xFF3B66FF).copy(alpha = 0.1f),
-                                                RoundedCornerShape(8.dp)
-                                            )
-                                    ) {
-                                        Text(
-                                            text = "4. Lịch sử & dữ liệu",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF3B66FF),
-                                            modifier = Modifier
-                                                .padding(vertical = 8.dp, horizontal = 16.dp)
-                                                .fillMaxWidth(),
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-
-                                    // Block 1: Lịch sử hoạt động
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Lịch sử hoạt động",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Xem lại lịch sử tập luyện và bữa ăn",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { /* Xử lý xem lịch sử */ },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = Color(0xFF1A1A1A),
-                                                containerColor = Color.White
-                                            ),
-                                            border = BorderStroke(1.dp, Color(0xFF1A1A1A)),
-                                            modifier = Modifier.height(40.dp)
-                                        ) {
-                                            Text(
-                                                text = "Xem",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                        }
-                                    }
-
-                                    // Divider
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-
-                                    // Block 2: Thống kê cá nhân
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Thống kê cá nhân",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Xem biểu đồ và phân tích hoạt động",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { /* Xử lý xem thống kê */ },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = Color(0xFF1A1A1A),
-                                                containerColor = Color.White
-                                            ),
-                                            border = BorderStroke(1.dp, Color(0xFF1A1A1A)),
-                                            modifier = Modifier.height(40.dp)
-                                        ) {
-                                            Text(
-                                                text = "Xem",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // PHẦN 5: HỖ TRỢ & KHÁC
+                            // PHẦN 4: HỖ TRỢ & KHÁC
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1070,7 +670,7 @@ fun SettingScreen(
                                             )
                                     ) {
                                         Text(
-                                            text = "5. Hỗ trợ & khác",
+                                            text = "4. Hỗ trợ & khác",
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF3B66FF),
@@ -1081,105 +681,6 @@ fun SettingScreen(
                                         )
                                     }
 
-                                    // Block 1: Trung tâm trợ giúp
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Trung tâm trợ giúp",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Câu hỏi thường gặp và hỗ trợ",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { /* Mở trung tâm trợ giúp */ },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = Color(0xFF1A1A1A),
-                                                containerColor = Color.White
-                                            ),
-                                            border = BorderStroke(1.dp, Color(0xFF1A1A1A)),
-                                            modifier = Modifier
-                                                .width(100.dp)
-                                                .height(40.dp)
-                                        ) {
-                                            Text(
-                                                text = "Truy cập",
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                        }
-                                    }
-
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-
-                                    // Block 2: Gửi phản hồi
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Gửi phản hồi",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Chia sẻ ý kiến của bạn về ứng dụng",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { /* Gửi phản hồi */ },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = Color(0xFF1A1A1A),
-                                                containerColor = Color.White
-                                            ),
-                                            border = BorderStroke(1.dp, Color(0xFF1A1A1A)),
-                                            modifier = Modifier
-                                                .width(100.dp)
-                                                .height(40.dp)
-                                        ) {
-                                            Text(
-                                                text = "Gửi",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                        }
-                                    }
-
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
 
                                     // Block 3: Điều khoản sử dụng
                                     Row(
@@ -1205,7 +706,7 @@ fun SettingScreen(
                                         }
 
                                         OutlinedButton(
-                                            onClick = { /* Mở điều khoản sử dụng */ },
+                                            onClick = { navController?.navigate(NavRoutes.Terms) },
                                             shape = RoundedCornerShape(10.dp),
                                             colors = ButtonDefaults.outlinedButtonColors(
                                                 contentColor = Color(0xFF1A1A1A),
@@ -1227,7 +728,7 @@ fun SettingScreen(
                                 }
                             }
 
-                            // PHẦN 6: VÙNG NGUY HIỂM - XÓA TÀI KHOẢN
+                            // PHẦN 5: VÙNG NGUY HIỂM - XÓA TÀI KHOẢN
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1341,7 +842,7 @@ fun SettingScreen(
                                 }
                             }
 
-                            // PHẦN 7: ĐĂNG XUẤT - THÊM MỚI
+                            // PHẦN 6: ĐĂNG XUẤT - THÊM MỚI
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()

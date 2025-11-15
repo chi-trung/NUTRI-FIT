@@ -1,4 +1,4 @@
-package com.example.nutrifit.ui.theme
+package com.example.nutrifit.theme
 
 import android.app.Activity
 import android.os.Build

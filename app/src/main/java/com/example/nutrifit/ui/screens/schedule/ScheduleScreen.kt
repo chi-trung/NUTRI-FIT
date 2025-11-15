@@ -36,7 +36,7 @@ import com.example.nutrifit.R
 import com.example.nutrifit.data.model.Exercise
 import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.navigation.NavRoutes
-import com.example.nutrifit.ui.theme.NutriFitTheme
+import com.example.nutrifit.theme.NutriFitTheme
 import com.example.nutrifit.viewmodel.CompletionState
 import com.example.nutrifit.viewmodel.DailySchedule
 import com.example.nutrifit.viewmodel.ScheduleState

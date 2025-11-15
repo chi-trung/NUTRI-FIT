@@ -1,4 +1,4 @@
-package com.example.nutrifit.ui.theme
+package com.example.nutrifit.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
