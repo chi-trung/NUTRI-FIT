@@ -33,7 +33,7 @@ import com.example.nutrifit.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,
+    onLogin: (AuthViewModel.NextScreen) -> Unit,
     onFirstLogin: () -> Unit,
     onGoRegister: () -> Unit,
     onForgotPw: () -> Unit,
@@ -60,11 +60,7 @@ fun LoginScreen(
     LaunchedEffect(authState) {
         when (val state = authState) {
             is AuthViewModel.AuthState.Success -> {
-                if (state.isNewUser) {
-                    onFirstLogin()
-                } else {
-                    onLogin()
-                }
+                onLogin(state.nextScreen)
             }
             is AuthViewModel.AuthState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()

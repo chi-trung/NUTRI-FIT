@@ -59,11 +59,12 @@ private val GitHubButtonColor = Color(0xFF24292E)
 
 @Composable
 fun LoginScreen2(
-    onLogin: () -> Unit,
+    onLogin: (AuthViewModel.NextScreen) -> Unit,
     onFirstLogin: () -> Unit,
     onGoRegister: () -> Unit,
     onGoBack: () -> Unit,
-    onForgotPw: () -> Unit
+    onForgotPw: () -> Unit,
+    onEmailNotVerified: (String) -> Unit // ✅ THÊM callback mới cho email chưa verify
 ) {
     val context = LocalContext.current
     val activity = context as android.app.Activity
@@ -86,11 +87,10 @@ fun LoginScreen2(
     LaunchedEffect(authState) {
         when (val state = authState) {
             is AuthViewModel.AuthState.Success -> {
-                if (state.isNewUser) {
-                    onFirstLogin()
-                } else {
-                    onLogin()
-                }
+                onLogin(state.nextScreen)
+            }
+            is AuthViewModel.AuthState.EmailNotVerified -> { // ✅ THÊM case mới: Navigate đến EmailVerificationScreen với email từ state
+                onEmailNotVerified(state.email)  // ✅ SỬA: Sử dụng state.email thay vì biến local 'email'
             }
             is AuthViewModel.AuthState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
@@ -308,14 +308,12 @@ fun LoginForm2(
             color = Color.Black,
             modifier = Modifier.padding(bottom = 4.dp)
         )
-
         PasswordTextField2(
             value = password,
-            onValueChange = onPasswordChange,
+            onValueChange = onPasswordChange,  // ✅ SỬA: Thay onPasswordChange thành onValueChange (để khớp với định nghĩa hàm)
             placeholder = "••••••••••••••••••••",
             focusManager = focusManager
         )
-
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(

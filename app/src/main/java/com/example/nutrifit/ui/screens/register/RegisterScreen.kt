@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
 import com.example.nutrifit.viewmodel.AuthViewModel
+import com.example.nutrifit.viewmodel.RegisterViewModel  // ✅ SỬA: Import từ package đúng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -62,7 +63,8 @@ private val GitHubButtonColor = Color(0xFF000000) // Màu GitHub (đen)
 @Composable
 fun RegisterScreen(
     onRegister: () -> Unit,
-    onBackToLogin: () -> Unit
+    onBackToLogin: () -> Unit,
+    onEmailVerification: (String, String) -> Unit // ✅ THÊM callback mới với source
 ) {
     val context = LocalContext.current
     val activity = context as android.app.Activity
@@ -94,36 +96,42 @@ fun RegisterScreen(
     }
     // --- Kết thúc xử lý đăng nhập Social ---
 
-
     // --- Xử lý đăng ký Email/Password với ViewModel ---
     val registrationState by registerViewModel.registrationState.collectAsState()
     var isLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(registrationState) {
-        when (val state = registrationState) {
-            is RegistrationState.Success -> {
-                isLoading = false
-                Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
-                onRegister() // Điều hướng khi thành công
-            }
-            is RegistrationState.Error -> {
-                isLoading = false
-                Toast.makeText(context, "Đăng ký thất bại: ${state.message}", Toast.LENGTH_SHORT).show()
-            }
-            is RegistrationState.Loading -> {
-                isLoading = true
-            }
-            is RegistrationState.Idle -> {
-                isLoading = false
-            }
-        }
-    }
-
+    // ✅ Lưu email vào state để pass vào callback
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+
+    // ✅ SỬA: Thêm else branch để fix "'when' expression must be exhaustive"
+    LaunchedEffect(registrationState) {
+        when (val state = registrationState) {
+            is RegisterViewModel.RegistrationState.Success -> { // ✅ SỬA: Thay vì Error, dùng Success để navigate
+                isLoading = false
+                // ✅ Navigate đến EmailVerificationScreen với email và source
+                onEmailVerification(email, "register")
+                registerViewModel.resetState()
+            }
+            is RegisterViewModel.RegistrationState.Error -> {
+                isLoading = false
+                Toast.makeText(context, "Đăng ký thất bại: ${state.message}", Toast.LENGTH_SHORT).show()
+            }
+            is RegisterViewModel.RegistrationState.Loading -> {
+                isLoading = true
+            }
+            is RegisterViewModel.RegistrationState.Idle -> {
+                isLoading = false
+            }
+            else -> {
+                // ✅ THÊM: Else branch để tránh lỗi "must be exhaustive" (mặc dù sealed class không cần)
+                isLoading = false
+            }
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -233,11 +241,7 @@ fun HeaderSection(onBackToLogin: () -> Unit) {
                 .scale(backScale)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = false,
-                        radius = 20.dp,
-                        color = Color.Gray
-                    )
+                    indication = ripple(bounded = false, radius = 20.dp, color = Color.Gray)
                 ) {
                     isBackPressed = true
                     onBackToLogin()
@@ -250,12 +254,7 @@ fun HeaderSection(onBackToLogin: () -> Unit) {
             tint = Color.Black
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Đăng nhập",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.Black
-        )
+        Text(text = "Đăng nhập", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Black)
     }
 }
 
@@ -346,18 +345,8 @@ fun SocialLoginSection(
     onGitHubLogin: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SocialLoginButton(
-            icon = R.drawable.google,
-            text = "Đăng nhập với Google",
-            buttonColor = GoogleButtonColor,
-            onClick = onGoogleLogin
-        )
-        SocialLoginButton(
-            icon = R.drawable.github,
-            text = "Đăng nhập với GitHub",
-            buttonColor = GitHubButtonColor,
-            onClick = onGitHubLogin
-        )
+        SocialLoginButton(icon = R.drawable.google, text = "Đăng nhập với Google", buttonColor = GoogleButtonColor, onClick = onGoogleLogin)
+        SocialLoginButton(icon = R.drawable.github, text = "Đăng nhập với GitHub", buttonColor = GitHubButtonColor, onClick = onGitHubLogin)
     }
 }
 
@@ -455,7 +444,8 @@ fun PasswordTextField(
                 Icon(
                     imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                     contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu",
-                    modifier = Modifier.size(20.dp).clickable { passwordVisible = !passwordVisible },
+                    modifier = Modifier.size(20.dp)
+                        .clickable { passwordVisible = !passwordVisible },
                     tint = Color.Gray
                 )
             }

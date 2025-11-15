@@ -12,6 +12,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
@@ -28,10 +30,17 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
+    sealed class NextScreen {
+        object Profile : NextScreen()
+        object Target : NextScreen()
+        object Home : NextScreen()
+    }
+
     sealed class AuthState {
         object Idle : AuthState()
         object Loading : AuthState()
-        data class Success(val user: FirebaseUser, val isNewUser: Boolean) : AuthState()
+        data class Success(val user: FirebaseUser, val nextScreen: NextScreen) : AuthState()
+        data class EmailNotVerified(val email: String) : AuthState()
         data class Error(val message: String) : AuthState()
     }
 
@@ -50,16 +59,36 @@ class AuthViewModel : ViewModel() {
         return googleSignInClient.signInIntent
     }
 
+    // Sửa signInWithEmail để kiểm tra email verification
     fun signInWithEmail(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
-                result.user?.let { user ->
-                    checkNewUser(user)
+                val user = result.user
+
+                if (user == null) {
+                    _authState.value = AuthState.Error("Đăng nhập thất bại. Vui lòng thử lại.")
+                    return@launch
                 }
+
+                // Kiểm tra email verification - đăng xuất nếu chưa verify
+                if (!user.isEmailVerified) {
+                    auth.signOut()
+                    _authState.value = AuthState.EmailNotVerified(email) // ✅ SỬA: Emit với email thay vì object trống
+                    return@launch
+                }
+
+                // Email đã verify → kiểm tra new user và cho login
+                checkNewUser(user)
+
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Login failed")
+                val errorMessage = when (e) {
+                    is FirebaseAuthInvalidCredentialsException -> "Email hoặc mật khẩu không đúng"
+                    is FirebaseAuthInvalidUserException -> "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa"
+                    else -> e.message ?: "Đăng nhập thất bại. Vui lòng thử lại."
+                }
+                _authState.value = AuthState.Error(errorMessage)
             }
         }
     }
@@ -72,7 +101,7 @@ class AuthViewModel : ViewModel() {
                 val account = task.getResult(ApiException::class.java)
                 firebaseAuthWithGoogle(account)
             } catch (e: ApiException) {
-                _authState.value = AuthState.Error("Google sign-in failed: ${e.message}")
+                _authState.value = AuthState.Error("Đăng nhập Google thất bại: ${e.message}")
             }
         }
     }
@@ -83,41 +112,68 @@ class AuthViewModel : ViewModel() {
             val result = auth.signInWithCredential(credential).await()
             result.user?.let { user ->
                 checkNewUser(user)
+            } ?: run {
+                _authState.value = AuthState.Error("Xác thực Firebase thất bại")
             }
         } catch (e: Exception) {
-            _authState.value = AuthState.Error(e.message ?: "Firebase auth failed")
+            _authState.value = AuthState.Error(e.message ?: "Xác thực Firebase thất bại")
         }
     }
 
     fun signInWithGitHub(activity: Activity) {
+        _authState.value = AuthState.Loading
         auth.signOut()
 
         val provider = OAuthProvider.newBuilder("github.com")
             .addCustomParameter("prompt", "login")
             .build()
+
         auth.startActivityForSignInWithProvider(activity, provider)
             .addOnSuccessListener { authResult ->
                 viewModelScope.launch {
                     authResult.user?.let { user ->
                         checkNewUser(user)
+                    } ?: run {
+                        _authState.value = AuthState.Error("Đăng nhập GitHub thất bại")
                     }
                 }
             }
             .addOnFailureListener { e ->
                 viewModelScope.launch {
-                    _authState.value = AuthState.Error("GitHub sign-in failed: ${e.message}")
+                    _authState.value = AuthState.Error("Đăng nhập GitHub thất bại: ${e.message}")
                 }
             }
     }
 
     private suspend fun checkNewUser(user: FirebaseUser) {
-        val isNewUser = userRepository.getUser(user.uid).isFailure
-        _authState.value = AuthState.Success(user, isNewUser)
+        try {
+            val userData = userRepository.getUser(user.uid)
+            val nextScreen = if (userData.isSuccess) {
+                val userInfo = userData.getOrNull()
+                when {
+                    userInfo?.name.isNullOrBlank() -> NextScreen.Profile
+                    userInfo?.goal.isNullOrBlank() -> NextScreen.Target
+                    else -> NextScreen.Home
+                }
+            } else {
+                // New user - chưa có data
+                NextScreen.Profile
+            }
+            _authState.value = AuthState.Success(user, nextScreen)
+        } catch (e: Exception) {
+            _authState.value = AuthState.Success(user, NextScreen.Profile)
+        }
     }
 
     fun signOut() {
         auth.signOut()
-        googleSignInClient.signOut()
+        if (::googleSignInClient.isInitialized) {
+            googleSignInClient.signOut()
+        }
+        _authState.value = AuthState.Idle
+    }
+
+    fun resetAuthState() {
         _authState.value = AuthState.Idle
     }
 }
