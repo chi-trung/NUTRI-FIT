@@ -21,4 +21,12 @@ object NavRoutes {
     const val MealDetail = "mealdetail"
     const val WORKOUT_DETAIL = "workout_detail"
     const val Terms = "terms"
+
+    // ✨ THÊM MỚI - Email Verification
+    const val EmailVerification = "email_verification"
+
+    // Helper function để tạo route với email parameter
+    fun emailVerificationRoute(email: String): String {
+        return "$EmailVerification/$email"
+    }
 }
