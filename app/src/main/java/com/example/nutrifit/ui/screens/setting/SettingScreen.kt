@@ -44,7 +44,7 @@ import com.example.nutrifit.viewmodel.SettingViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.auth.FirebaseAuth // ✅ THÊM IMPORT NÀY
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -432,8 +432,6 @@ fun SettingScreen(
                                         modifier = Modifier.padding(vertical = 8.dp)
                                     )
 
-
-
                                     // Block 3: Liên kết tài khoản
                                     Column {
                                         Text(
@@ -682,7 +680,6 @@ fun SettingScreen(
                                         )
                                     }
 
-
                                     // Block 3: Điều khoản sử dụng
                                     Row(
                                         modifier = Modifier
@@ -857,7 +854,16 @@ fun SettingScreen(
                             ) {
                                 Button(
                                     onClick = {
-                                        // ✅ CHỈ cần signOut Firebase
+                                        // ✅ Xóa flag profile và signOut
+                                        val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                                        val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+                                        if (userId != null) {
+                                            sharedPref.edit()
+                                                .remove("has_completed_profile_$userId")
+                                                .apply()
+                                        }
+
                                         FirebaseAuth.getInstance().signOut()
 
                                         // Navigate về Login và xóa toàn bộ back stack
