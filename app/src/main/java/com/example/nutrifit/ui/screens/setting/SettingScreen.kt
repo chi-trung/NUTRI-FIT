@@ -70,8 +70,6 @@ fun SettingScreen(
         is SettingUiState.Success -> {
             val user = state.user
             val providers = state.providers
-            var name by remember { mutableStateOf(user.name) }
-            var email by remember { mutableStateOf(user.email) }
             val height by remember { mutableStateOf(user.height ?: "") }
             val weight by remember { mutableStateOf(user.weight ?: "") }
             val goal by remember { mutableStateOf(user.goal ?: "") }
@@ -201,16 +199,15 @@ fun SettingScreen(
                                                 modifier = Modifier.padding(bottom = 4.dp)
                                             )
                                             OutlinedTextField(
-                                                value = name,
-                                                onValueChange = { name = it },
+                                                value = user.name,
+                                                onValueChange = { },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 placeholder = { Text("Nhập họ tên...") },
+                                                enabled = false,
                                                 shape = RoundedCornerShape(12.dp),
                                                 colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedBorderColor = Color(0xFF4F66FF),
-                                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                                                    focusedTextColor = Color.Black,
-                                                    unfocusedTextColor = Color.Black
+                                                    disabledTextColor = Color.Black,
+                                                    disabledBorderColor = Color.Gray.copy(alpha = 0.5f)
                                                 )
                                             )
                                         }
@@ -225,44 +222,18 @@ fun SettingScreen(
                                                 modifier = Modifier.padding(bottom = 4.dp)
                                             )
                                             OutlinedTextField(
-                                                value = email,
-                                                onValueChange = { email = it },
+                                                value = user.email,
+                                                onValueChange = { },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 placeholder = { Text("Nhập email...") },
-                                                enabled = true,
+                                                enabled = false,
                                                 shape = RoundedCornerShape(12.dp),
                                                 colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedBorderColor = Color(0xFF4F66FF),
-                                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                                                    focusedTextColor = Color.Black,
-                                                    unfocusedTextColor = Color.Black
+                                                    disabledTextColor = Color.Black,
+                                                    disabledBorderColor = Color.Gray.copy(alpha = 0.5f)
                                                 )
                                             )
                                         }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(24.dp))
-
-                                    // Save Button
-                                    Button(
-                                        onClick = {
-                                            viewModel.saveUserData(name, email)
-                                            Toast.makeText(context, "Lưu thành công!", Toast.LENGTH_SHORT).show()
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(50.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF4F66FF)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text(
-                                            text = "Lưu thay đổi",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
                                     }
 
                                     Spacer(modifier = Modifier.height(24.dp))
@@ -721,120 +692,6 @@ fun SettingScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color(0xFF1A1A1A)
                                             )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // PHẦN 5: VÙNG NGUY HIỂM - XÓA TÀI KHOẢN
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
-                                // Viền đỏ ngoài cùng (hiệu ứng đường đỏ bên trái)
-                                Box(
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .background(
-                                            color = Color(0xFFFF4D4F),
-                                            shape = RoundedCornerShape(16.dp)
-                                        )
-                                )
-
-                                // Card chính đặt chồng lên, hơi dịch sang phải
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 8.dp)
-                                        .shadow(
-                                            elevation = 4.dp,
-                                            shape = RoundedCornerShape(16.dp)
-                                        )
-                                        .background(
-                                            color = Color(0xFFFFF5F5),
-                                            shape = RoundedCornerShape(16.dp)
-                                        )
-                                ) {
-                                    // Viền trái đỏ bên trong
-                                    Box(
-                                        modifier = Modifier
-                                            .width(6.dp)
-                                            .fillMaxHeight()
-                                            .background(
-                                                color = Color(0xFFFF4D4F),
-                                                shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
-                                            )
-                                    )
-
-                                    // Nội dung chính
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 20.dp, top = 20.dp, end = 28.dp, bottom = 20.dp)
-                                    ) {
-                                        // Header cảnh báo
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Warning,
-                                                contentDescription = "Cảnh báo",
-                                                tint = Color(0xFFFF4D4F),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = "Vùng nguy hiểm",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFFFF4D4F)
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Divider(color = Color(0xFFFFD6D6), thickness = 1.dp)
-                                        Spacer(modifier = Modifier.height(12.dp))
-
-                                        // Nội dung chính
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = "Xóa tài khoản",
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 16.sp,
-                                                    color = Color.Black
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "Xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn",
-                                                    fontSize = 13.sp,
-                                                    color = Color(0xFF555555)
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.width(16.dp))
-
-                                            Button(
-                                                onClick = { /* Handle delete account */ },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFFFF4D4F)
-                                                ),
-                                                shape = RoundedCornerShape(8.dp),
-                                                modifier = Modifier.height(40.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Xóa",
-                                                    color = Color.White,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp
-                                                )
-                                            }
                                         }
                                     }
                                 }
