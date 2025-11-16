@@ -47,7 +47,6 @@ import coil.compose.rememberImagePainter
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.DailyIntake
 import com.example.nutrifit.data.model.Exercise
-import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.ui.screens.meal.MealCard
 import com.example.nutrifit.viewmodel.DailyIntakeState
@@ -362,21 +361,7 @@ fun HomeScreen(navController: NavController) {
                             ) {
                                 state.exercises.forEach { exercise ->
                                     ExerciseCard(exercise = exercise) {
-                                        val videoResId = context.resources.getIdentifier(exercise.videoUrl, "raw", context.packageName)
-                                        val workout = Workout(
-                                            name = exercise.name,
-                                            description = exercise.description,
-                                            muscleGroup = exercise.muscleGroup,
-                                            difficulty = exercise.difficulty,
-                                            targets = exercise.targets,
-                                            imageUrl = exercise.imageUrl,
-                                            videoUrl = exercise.videoUrl,
-                                            caloriesBurned = exercise.caloriesBurned,
-                                            reps = exercise.reps,
-                                            videoResId = videoResId
-                                        )
-                                        navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
-                                        navController.navigate(NavRoutes.WORKOUT_DETAIL)
+                                        navController.navigate("${NavRoutes.WORKOUT_DETAIL}/${exercise.name}")
                                     }
                                     Spacer(modifier = Modifier.width(16.dp))
                                 }

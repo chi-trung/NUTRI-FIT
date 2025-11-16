@@ -133,8 +133,7 @@ fun WorkoutContent(groupedWorkouts: Map<String, List<Workout>>, navController: N
 
         items(groupedWorkouts[selectedGroup] ?: emptyList()) { workout ->
             WorkoutCard(workout = workout) {
-                navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
-                navController.navigate(NavRoutes.WORKOUT_DETAIL)
+                navController.navigate("${NavRoutes.WORKOUT_DETAIL}/${workout.name}")
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

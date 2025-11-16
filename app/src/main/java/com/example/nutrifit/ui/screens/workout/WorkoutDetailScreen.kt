@@ -29,12 +29,15 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,31 +56,68 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.nutrifit.data.model.Workout
+import com.example.nutrifit.viewmodel.WorkoutViewModel
+import com.example.nutrifit.viewmodel.WorkoutsState
 
 @Composable
-fun WorkoutDetailScreen(workout: Workout?, navController: NavController) {
+fun WorkoutDetailScreen(
+    workoutId: String,
+    navController: NavController,
+    workoutViewModel: WorkoutViewModel
+) {
+    // Lắng nghe trạng thái từ ViewModel
+    val workoutsState by workoutViewModel.workoutsState.collectAsState()
+
+    // Tìm bài tập dựa trên ID
+    var workout by remember(workoutsState, workoutId) {
+        mutableStateOf<Workout?>(null)
+    }
+
+    LaunchedEffect(workoutsState, workoutId) {
+        if (workoutsState is WorkoutsState.Success) {
+            workout = (workoutsState as WorkoutsState.Success).workouts.values
+                .flatten()
+                .find { it.name == workoutId }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color(0xFFF7F7F7) // Màu nền xám nhẹ
-    ) {
-        if (workout == null) {
-            Box(modifier = Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
-                Text("Không tìm thấy thông tin bài tập.", color = Color.Gray)
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+            when (workoutsState) {
+                is WorkoutsState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                is WorkoutsState.Error -> {
+                    // Hiển thị lỗi nếu không thể tải dữ liệu
+                    Text(
+                        text = (workoutsState as WorkoutsState.Error).message,
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                    )
+                }
+                is WorkoutsState.Success -> {
+                    if (workout != null) {
+                        val scrollState = rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
+                        ) {
+                            HeaderSection(workout!!, navController)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            BodySection(workout!!)
+                        }
+                    } else {
+                        // Hiển thị nếu không tìm thấy bài tập với ID tương ứng
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Không tìm thấy thông tin bài tập.", color = Color.Gray)
+                        }
+                    }
+                }
             }
-            return@Scaffold
-        }
-
-        val scrollState = rememberScrollState()
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-                .verticalScroll(scrollState)
-        ) {
-            HeaderSection(workout, navController)
-            Spacer(modifier = Modifier.height(16.dp))
-            BodySection(workout)
         }
     }
 }

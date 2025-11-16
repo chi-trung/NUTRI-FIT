@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
-import com.example.nutrifit.data.model.Workout
 import com.example.nutrifit.ui.components.BottomNavBar
 import com.example.nutrifit.ui.screens.ScanScreen.ScanScreen
 import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
@@ -52,6 +51,7 @@ import com.example.nutrifit.ui.screens.workout.WorkoutScreen
 import com.example.nutrifit.viewmodel.SettingViewModel
 import com.example.nutrifit.viewmodel.ForgotPasswordViewModel
 import com.example.nutrifit.viewmodel.AuthViewModel
+import com.example.nutrifit.viewmodel.WorkoutViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -364,9 +364,17 @@ fun AppNavHost() {
                     MealDetailScreen(mealId = mealId, navController = navController)
                 }
 
-                composable(NavRoutes.WORKOUT_DETAIL) {
-                    val workout = navController.previousBackStackEntry?.savedStateHandle?.get<Workout>("workout")
-                    WorkoutDetailScreen(workout = workout, navController = navController)
+                composable(
+                    route = "${NavRoutes.WORKOUT_DETAIL}/{workoutId}",
+                    arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val workoutId = backStackEntry.arguments?.getString("workoutId") ?: ""
+                    val workoutViewModel: WorkoutViewModel = viewModel()
+                    WorkoutDetailScreen(
+                        workoutId = workoutId,
+                        navController = navController,
+                        workoutViewModel = workoutViewModel
+                    )
                 }
 
                 composable(NavRoutes.Schedule) {
