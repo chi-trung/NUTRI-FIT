@@ -287,7 +287,9 @@ private fun DescriptionCard(description: String) {
 
 @Composable
 private fun VideoCard(workout: Workout) {
-    if (workout.videoResId != 0) {
+    val context = LocalContext.current
+    val videoResId = context.resources.getIdentifier(workout.videoUrl, "raw", context.packageName)
+    if (videoResId != 0) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -298,8 +300,7 @@ private fun VideoCard(workout: Workout) {
                 Text("Video hướng dẫn", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val context = LocalContext.current
-                val videoUri = Uri.parse("android.resource://${context.packageName}/${workout.videoResId}")
+                val videoUri = Uri.parse("android.resource://${context.packageName}/$videoResId")
                 var isPlaying by remember { mutableStateOf(false) }
 
                 Box(

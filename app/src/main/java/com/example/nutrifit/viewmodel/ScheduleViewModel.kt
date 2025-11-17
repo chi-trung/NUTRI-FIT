@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.threeten.bp.DateTimeUtils
 import org.threeten.bp.DayOfWeek
@@ -22,14 +23,12 @@ import org.threeten.bp.ZoneId
 import java.util.Date
 import java.util.UUID
 
-// Lớp dữ liệu cho lịch trình hàng ngày, sử dụng Exercise từ model
 data class DailySchedule(
     val date: LocalDate,
     val scheduleName: String,
     val exercises: SnapshotStateList<Exercise>
 )
 
-// Các trạng thái của ViewModel
 sealed class ScheduleState {
     object Loading : ScheduleState()
     data class Success(val schedules: List<DailySchedule>) : ScheduleState()
@@ -46,7 +45,7 @@ class ScheduleViewModel : ViewModel() {
 
     private val workoutCompletionRepository = WorkoutCompletionRepository()
     private val exerciseRepository = ExerciseRepository()
-    private val dailyIntakeRepository = DailyIntakeRepository() // Thêm repository
+    private val dailyIntakeRepository = DailyIntakeRepository()
     private val auth = FirebaseAuth.getInstance()
 
     private val _scheduleState = MutableStateFlow<ScheduleState>(ScheduleState.Loading)
@@ -84,14 +83,10 @@ class ScheduleViewModel : ViewModel() {
     }
 
     private fun generateWeekSchedule(dateInWeek: LocalDate): List<DailySchedule> {
-        val schedules = mutableListOf<DailySchedule>()
         val startOfWeek = dateInWeek.with(DayOfWeek.MONDAY)
-
-        for (i in 0..6) {
+        return (0..6).map { i ->
             val currentDate = startOfWeek.plusDays(i.toLong())
-            val dayOfWeek = currentDate.dayOfWeek
-
-            val (scheduleName, dailyExercises) = when (dayOfWeek) {
+            val (scheduleName, dailyExercises) = when (currentDate.dayOfWeek) {
                 DayOfWeek.MONDAY -> "Ngực & Tay" to allExercises.filter { it.muscleGroup == "Ngực" || it.muscleGroup == "Tay trước" }
                 DayOfWeek.TUESDAY -> "Lưng & Vai" to allExercises.filter { it.muscleGroup == "Lưng" || it.muscleGroup == "Vai" }
                 DayOfWeek.WEDNESDAY -> "Chân & Mông" to allExercises.filter { it.muscleGroup == "Chân" || it.muscleGroup == "Mông" }
@@ -100,32 +95,19 @@ class ScheduleViewModel : ViewModel() {
                 DayOfWeek.SATURDAY -> "Cardio" to allExercises.filter { it.muscleGroup == "Toàn thân" }
                 DayOfWeek.SUNDAY -> "Nghỉ ngơi" to emptyList()
             }
-
-            schedules.add(
-                DailySchedule(
-                    date = currentDate,
-                    scheduleName = scheduleName,
-                    exercises = mutableStateListOf<Exercise>().apply { addAll(dailyExercises.map { it.copy() }) }
-                )
-            )
+            DailySchedule(currentDate, scheduleName, mutableStateListOf<Exercise>().apply { addAll(dailyExercises.map { it.copy() }) })
         }
-        return schedules
     }
 
     private fun syncScheduleState(weeklySchedules: List<DailySchedule>) {
-        viewModelScope.launch {
-            val userId = auth.currentUser?.uid ?: return@launch
+        val userId = auth.currentUser?.uid ?: return
 
-            weeklySchedules.forEach { dailySchedule ->
-                if (dailySchedule.exercises.isNotEmpty()) {
-                    workoutCompletionRepository.getCompletedWorkouts(userId, dailySchedule.date).onSuccess { completedWorkouts ->
+        weeklySchedules.forEach { dailySchedule ->
+            if (dailySchedule.exercises.isNotEmpty()) {
+                viewModelScope.launch {
+                    workoutCompletionRepository.getCompletedWorkoutsFlow(userId, dailySchedule.date).collectLatest { completedWorkouts ->
                         val updatedExercises = dailySchedule.exercises.map { exercise ->
-                            val isCompletedOnServer = completedWorkouts.any { it.workoutName == exercise.name }
-                            if (exercise.isCompleted != isCompletedOnServer) {
-                                exercise.copy(isCompleted = isCompletedOnServer)
-                            } else {
-                                exercise
-                            }
+                            exercise.copy(isCompleted = completedWorkouts.any { it.workoutName == exercise.name })
                         }
                         dailySchedule.exercises.clear()
                         dailySchedule.exercises.addAll(updatedExercises)
@@ -136,63 +118,50 @@ class ScheduleViewModel : ViewModel() {
     }
 
     fun handleCheckChanged(exercise: Exercise, isChecked: Boolean, date: LocalDate) {
+        // --- Cập nhật giao diện ngay lập tức ---
+        val currentState = _scheduleState.value
+        if (currentState is ScheduleState.Success) {
+            currentState.schedules.find { it.date == date }?.let { dailySchedule ->
+                val exerciseIndex = dailySchedule.exercises.indexOfFirst { it.name == exercise.name }
+                if (exerciseIndex != -1) {
+                    val updatedExercise = dailySchedule.exercises[exerciseIndex].copy(isCompleted = isChecked)
+                    dailySchedule.exercises[exerciseIndex] = updatedExercise
+                }
+            }
+        }
+        // --- Kết thúc cập nhật giao diện ---
+
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: run {
                 _completionState.value = CompletionState.Error("Bạn chưa đăng nhập!")
                 return@launch
             }
 
-            val updatedExercise = exercise.copy(isCompleted = isChecked)
-
-            (_scheduleState.value as? ScheduleState.Success)?.schedules
-                ?.find { it.date == date }?.exercises?.let { exercises ->
-                    val index = exercises.indexOfFirst { it.id == exercise.id }
-                    if (index != -1) {
-                        exercises[index] = updatedExercise
-                    }
-                }
-
             if (isChecked) {
-                val caloriesBurned = exercise.caloriesBurned
-
+                val consumedWorkout = ConsumedWorkout(name = exercise.name, caloriesBurned = exercise.caloriesBurned, imageUrl = exercise.imageUrl, timestamp = Date())
+                dailyIntakeRepository.addConsumedWorkout(userId, consumedWorkout)
+                
                 val completedWorkout = CompletedWorkout(
+                    id = UUID.randomUUID().toString(),
                     userId = userId,
                     workoutName = exercise.name,
                     muscleGroup = exercise.muscleGroup,
-                    caloriesBurned = caloriesBurned,
+                    caloriesBurned = exercise.caloriesBurned,
                     imageUrl = exercise.imageUrl,
-                    completedAt = java.util.Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
+                    completedAt = DateTimeUtils.toDate(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 )
                 workoutCompletionRepository.markWorkoutAsComplete(userId, completedWorkout).onSuccess {
-                    _completionState.value = CompletionState.Success("Đã hoàn thành: ${exercise.name}")
-
-                    // Thêm vào nhật ký DailyIntake
-                    val consumedWorkout = ConsumedWorkout(
-                        id = UUID.randomUUID().toString(),
-                        name = exercise.name,
-                        caloriesBurned = caloriesBurned,
-                        imageUrl = exercise.imageUrl,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    viewModelScope.launch {
-                        dailyIntakeRepository.addConsumedWorkout(userId, consumedWorkout)
-                    }
-
+                     _completionState.value = CompletionState.Success("Đã hoàn thành: ${exercise.name}")
                 }.onFailure {
-                    _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi lưu")
+                     _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi lưu")
                 }
+
             } else {
+                dailyIntakeRepository.removeConsumedWorkoutByName(userId, exercise.name, DateTimeUtils.toDate(date.atStartOfDay(ZoneId.systemDefault()).toInstant()))
                 workoutCompletionRepository.unmarkWorkoutAsComplete(userId, exercise.name, date).onSuccess {
                     _completionState.value = CompletionState.Success("Đã bỏ hoàn thành: ${exercise.name}")
-
-                    // Xóa khỏi nhật ký DailyIntake
-                     viewModelScope.launch {
-                         val toDate = DateTimeUtils.toDate(date.atStartOfDay(ZoneId.systemDefault()).toInstant())
-                        dailyIntakeRepository.removeConsumedWorkoutByName(userId, exercise.name, toDate)
-                    }
-
                 }.onFailure {
-                    _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi bỏ lưu")
+                     _completionState.value = CompletionState.Error(it.message ?: "Lỗi khi bỏ lưu")
                 }
             }
         }

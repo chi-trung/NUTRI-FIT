@@ -1,19 +1,21 @@
 package com.example.nutrifit.data.model
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.nutrifit.data.Converters
 
-@Parcelize
+@Entity(tableName = "workouts")
+@TypeConverters(Converters::class)
 data class Workout(
+    @PrimaryKey val id: String = "",
     val name: String = "",
     val description: String = "",
-    val muscleGroup: String = "",
     val difficulty: String = "",
-    val targets: List<String> = emptyList(),
-    val imageUrl: String = "",
-    val videoUrl: String = "",
     val caloriesBurned: Int = 0,
+    val muscleGroup: String = "",
     val reps: String = "",
-    var imageResId: Int = 0,
-    var videoResId: Int = 0
-) : Parcelable
+    val imageUrl: String = "",
+    val targets: List<String> = emptyList(),
+    val videoUrl: String = ""
+)

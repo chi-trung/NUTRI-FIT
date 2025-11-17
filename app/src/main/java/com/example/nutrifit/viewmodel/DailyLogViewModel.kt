@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.threeten.bp.Instant
-import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
-import org.threeten.bp.format.DateTimeFormatter
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -55,8 +54,8 @@ class DailyLogViewModel : ViewModel() {
             dailyIntakeRepository.getIntakeForDateRange(userId, startDate, endDate).collect { result ->
                 if (result.isSuccess) {
                     val weeklyIntake = result.getOrNull() ?: emptyList()
-                    val allMeals = weeklyIntake.flatMap { it.consumedMeals }.sortedByDescending { meal: ConsumedMeal -> meal.consumedAt.time }
-                    val allWorkouts = weeklyIntake.flatMap { it.consumedWorkouts }.sortedByDescending { workout: ConsumedWorkout -> workout.timestamp }
+                    val allMeals = weeklyIntake.flatMap { it.consumedMeals }.sortedByDescending { it.consumedAt }
+                    val allWorkouts = weeklyIntake.flatMap { it.consumedWorkouts }.sortedByDescending { it.timestamp }
 
                     _logState.value = LogState.Success(
                         meals = allMeals,
@@ -83,7 +82,6 @@ class DailyLogViewModel : ViewModel() {
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.WEEK_OF_YEAR, offset)
 
-        // Set to the first day of the week (Monday)
         calendar.firstDayOfWeek = Calendar.MONDAY
         calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
         calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -92,7 +90,6 @@ class DailyLogViewModel : ViewModel() {
         calendar.set(Calendar.MILLISECOND, 0)
         val startDate = calendar.time
 
-        // Add 6 days to get Sunday
         calendar.add(Calendar.DAY_OF_YEAR, 6)
         calendar.set(Calendar.HOUR_OF_DAY, 23)
         calendar.set(Calendar.MINUTE, 59)
@@ -104,10 +101,8 @@ class DailyLogViewModel : ViewModel() {
     }
 
     private fun updateWeekDisplay(startDate: Date, endDate: Date) {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM")
-        val start = Instant.ofEpochMilli(startDate.time).atZone(ZoneId.systemDefault()).toLocalDate()
-        val end = Instant.ofEpochMilli(endDate.time).atZone(ZoneId.systemDefault()).toLocalDate()
-        _weekDisplay.value = "Tuần: ${start.format(formatter)} - ${end.format(formatter)}"
+        val formatter = SimpleDateFormat("dd/MM", Locale.getDefault())
+        _weekDisplay.value = "Tuần: ${formatter.format(startDate)} - ${formatter.format(endDate)}"
     }
 
     fun deleteMeal(meal: ConsumedMeal) {
@@ -120,11 +115,13 @@ class DailyLogViewModel : ViewModel() {
     fun deleteWorkout(workout: ConsumedWorkout) {
         viewModelScope.launch {
             val userId = auth.currentUser?.uid ?: return@launch
-            val result = dailyIntakeRepository.removeConsumedWorkout(userId, workout)
-            if (result.isFailure) return@launch
 
-            val date = Instant.ofEpochMilli(workout.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-            workoutCompletionRepository.unmarkWorkoutAsComplete(userId, workout.name, date)
+            // 1. Xóa khỏi nhật ký (daily_intakes)
+            dailyIntakeRepository.removeConsumedWorkout(userId, workout)
+
+            // 2. Xóa khỏi trạng thái hoàn thành (completed_workouts) để uncheck checkbox
+            val localDate = Instant.ofEpochMilli(workout.timestamp.time).atZone(ZoneId.systemDefault()).toLocalDate()
+            workoutCompletionRepository.unmarkWorkoutAsComplete(userId, workout.name, localDate)
         }
     }
 
@@ -133,14 +130,8 @@ class DailyLogViewModel : ViewModel() {
             val userId = auth.currentUser?.uid ?: return@launch
             if (_logState.value is LogState.Success) {
                 val mealsToDelete = (_logState.value as LogState.Success).meals
-                mealsToDelete.groupBy { meal ->
-                    val cal = Calendar.getInstance().apply { timeInMillis = meal.consumedAt.time }
-                    cal.get(Calendar.DAY_OF_YEAR)
-                }.keys.forEach { dayOfYear ->
-                    val mealInDay = mealsToDelete.first { meal ->
-                        val cal = Calendar.getInstance().apply { timeInMillis = meal.consumedAt.time }
-                        cal.get(Calendar.DAY_OF_YEAR) == dayOfYear
-                    }
+                mealsToDelete.groupBy { it.consumedAt.day }.keys.forEach { day ->
+                    val mealInDay = mealsToDelete.first { it.consumedAt.day == day }
                     dailyIntakeRepository.clearAllConsumedMealsForDate(userId, mealInDay.consumedAt)
                 }
             }
@@ -154,19 +145,13 @@ class DailyLogViewModel : ViewModel() {
                 val workoutsToDelete = (_logState.value as LogState.Success).workouts
 
                 workoutsToDelete.forEach {
-                    val date = Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-                    workoutCompletionRepository.unmarkWorkoutAsComplete(userId, it.name, date)
+                    val localDate = Instant.ofEpochMilli(it.timestamp.time).atZone(ZoneId.systemDefault()).toLocalDate()
+                    workoutCompletionRepository.unmarkWorkoutAsComplete(userId, it.name, localDate)
                 }
 
-                 workoutsToDelete.groupBy { workout ->
-                    val cal = Calendar.getInstance().apply { timeInMillis = workout.timestamp }
-                    cal.get(Calendar.DAY_OF_YEAR)
-                }.keys.forEach { dayOfYear ->
-                    val workoutInDay = workoutsToDelete.first { workout ->
-                        val cal = Calendar.getInstance().apply { timeInMillis = workout.timestamp }
-                        cal.get(Calendar.DAY_OF_YEAR) == dayOfYear
-                    }
-                    dailyIntakeRepository.clearAllConsumedWorkoutsForDate(userId, Date(workoutInDay.timestamp))
+                 workoutsToDelete.groupBy { it.timestamp.day }.keys.forEach { day ->
+                    val workoutInDay = workoutsToDelete.first { it.timestamp.day == day }
+                    dailyIntakeRepository.clearAllConsumedWorkoutsForDate(userId, workoutInDay.timestamp)
                 }
             }
         }

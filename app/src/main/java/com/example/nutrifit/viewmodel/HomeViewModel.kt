@@ -120,8 +120,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private fun fetchMealSuggestions(goal: String) {
         viewModelScope.launch {
             mealRepository.getMealsByGoal(goal).onSuccess { meals ->
-                val mappedMeals = mapMealImages(meals)
-                _suggestedMealsState.value = MealsState.Success(mappedMeals)
+                _suggestedMealsState.value = MealsState.Success(meals)
             }.onFailure { e ->
                 _suggestedMealsState.value = MealsState.Error(e.message ?: "Failed to fetch suggestions")
             }
@@ -148,23 +147,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }.onFailure { e ->
                 _suggestedExercisesState.value = SuggestedExercisesState.Error(e.message ?: "Failed to fetch user goal suggestions")
             }
-        }
-    }
-
-
-    private fun mapMealImages(meals: List<Meal>): List<Meal> {
-        val context = getApplication<Application>().applicationContext
-        return meals.map { meal ->
-            val imageResName = meal.imageRes // imageRes is a String
-            val imageIdentifier = if (imageResName.isNotEmpty()) {
-                context.resources.getIdentifier(imageResName, "drawable", context.packageName)
-            } else {
-                0
-            }
-
-            val finalImageResId = if (imageIdentifier == 0) R.drawable.logo else imageIdentifier
-
-            meal.copy(imageResId = finalImageResId)
         }
     }
 }

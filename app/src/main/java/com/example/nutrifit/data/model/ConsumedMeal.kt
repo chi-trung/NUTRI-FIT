@@ -1,18 +1,21 @@
 package com.example.nutrifit.data.model
 
-import com.google.firebase.firestore.ServerTimestamp
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.nutrifit.data.Converters
 import java.util.Date
+import java.util.UUID
 
-/**
- * Represents a single meal item that a user has consumed on a specific day.
- */
+@Entity(tableName = "consumed_meals")
+@TypeConverters(Converters::class)
 data class ConsumedMeal(
-    val id: String = "", 
-    val mealId: Int = 0,      // The ID of the original meal from the main meal list
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val mealId: Int = 0,
     val name: String = "",
     val calories: Int = 0,
-    val mealType: String = "", // e.g., "Buổi sáng", "Buổi trưa"
-    val imageRes: String = "", // Drawable resource name for the meal image
-    @ServerTimestamp
-    val consumedAt: Date = Date()
+    val consumedAt: Date = Date(),
+    val mealType: String = "",
+    val imageRes: String = "",
+    var synced: Boolean = false
 )

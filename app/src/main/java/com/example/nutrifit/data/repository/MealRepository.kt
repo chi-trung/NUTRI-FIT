@@ -23,6 +23,7 @@ class MealRepository {
             val fat = (document.getLong("fat")?.toInt()) ?: 0
             val difficulty = document.getString("difficulty") ?: "Dễ"
             val instructions = document.getString("instructions") ?: ""
+            val suitableGoals = document.get("suitableGoals") as? List<String> ?: emptyList()
 
             Meal(
                 id = id,
@@ -36,7 +37,8 @@ class MealRepository {
                 carbs = carbs,
                 fat = fat,
                 difficulty = difficulty,
-                instructions = instructions
+                instructions = instructions,
+                suitableGoals = suitableGoals
             )
         } catch (e: Exception) {
             null

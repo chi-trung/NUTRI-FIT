@@ -2,6 +2,9 @@ package com.example.nutrifit.data.repository
 
 import com.example.nutrifit.data.model.CompletedWorkout
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import org.threeten.bp.LocalDate
 import org.threeten.bp.ZoneId
@@ -14,7 +17,6 @@ class WorkoutCompletionRepository {
 
     suspend fun markWorkoutAsComplete(userId: String, completedWorkout: CompletedWorkout): Result<Unit> {
         return try {
-            // Sử dụng set() và document() để có ID dễ đoán hơn (tùy chọn) hoặc add() để có ID tự động
             getUserWorkoutsCollection(userId).add(completedWorkout).await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -22,22 +24,26 @@ class WorkoutCompletionRepository {
         }
     }
 
-    suspend fun getCompletedWorkouts(userId: String, date: LocalDate): Result<List<CompletedWorkout>> {
-        return try {
-            val startOfDay = Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
-            val endOfDay = Date(date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
+    // Nâng cấp để sử dụng Flow
+    fun getCompletedWorkoutsFlow(userId: String, date: LocalDate): Flow<List<CompletedWorkout>> = callbackFlow {
+        val startOfDay = Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
+        val endOfDay = Date(date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
 
-            val querySnapshot = getUserWorkoutsCollection(userId)
-                .whereGreaterThanOrEqualTo("completedAt", startOfDay)
-                .whereLessThan("completedAt", endOfDay)
-                .get()
-                .await()
-            
-            val workouts = querySnapshot.toObjects(CompletedWorkout::class.java)
-            Result.success(workouts)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        val listener = getUserWorkoutsCollection(userId)
+            .whereGreaterThanOrEqualTo("completedAt", startOfDay)
+            .whereLessThan("completedAt", endOfDay)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    close(e)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val workouts = snapshot.toObjects(CompletedWorkout::class.java)
+                    trySend(workouts)
+                }
+            }
+        
+        awaitClose { listener.remove() }
     }
 
     suspend fun unmarkWorkoutAsComplete(userId: String, workoutName: String, date: LocalDate): Result<Unit> {
@@ -45,7 +51,6 @@ class WorkoutCompletionRepository {
             val startOfDay = Date(date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
             val endOfDay = Date(date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000)
 
-            // Tìm TẤT CẢ các bản ghi của bài tập này trong ngày
             val querySnapshot = getUserWorkoutsCollection(userId)
                 .whereEqualTo("workoutName", workoutName)
                 .whereGreaterThanOrEqualTo("completedAt", startOfDay)
@@ -53,13 +58,12 @@ class WorkoutCompletionRepository {
                 .get()
                 .await()
 
-            // Nếu có bản ghi nào được tìm thấy, xóa tất cả chúng trong một batch
             if (!querySnapshot.isEmpty) {
                 val batch = FirebaseFirestore.getInstance().batch()
                 querySnapshot.documents.forEach { document ->
                     batch.delete(document.reference)
                 }
-                batch.commit().await() // Thực thi việc xóa
+                batch.commit().await()
             }
             Result.success(Unit)
         } catch (e: Exception) {

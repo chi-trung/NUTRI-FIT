@@ -61,9 +61,8 @@ import com.example.nutrifit.data.model.ConsumedMeal
 import com.example.nutrifit.data.model.ConsumedWorkout
 import com.example.nutrifit.viewmodel.DailyLogViewModel
 import com.example.nutrifit.viewmodel.LogState
-import org.threeten.bp.Instant
-import org.threeten.bp.ZoneId
-import org.threeten.bp.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -148,7 +147,7 @@ fun DailyLogScreen(navController: NavController) {
                             if (state.meals.isEmpty()) {
                                 EmptyLogView("bữa ăn")
                             } else {
-                                GroupedLazyColumn(items = state.meals, keyExtractor = { it.consumedAt.time }) { meal ->
+                                GroupedLazyColumn(items = state.meals, keyExtractor = { it.consumedAt }) { meal ->
                                     MealLogItem(meal = meal) { viewModel.deleteMeal(meal) }
                                 }
                             }
@@ -188,16 +187,19 @@ fun WeekNavigationBar(weekDisplay: String, onPrevious: () -> Unit, onNext: () ->
 @Composable
 fun <T> GroupedLazyColumn(
     items: List<T>,
-    keyExtractor: (T) -> Long,
+    keyExtractor: (T) -> Date,
     itemContent: @Composable (T) -> Unit
 ) {
-    val grouped = items.groupBy { Instant.ofEpochMilli(keyExtractor(it)).atZone(ZoneId.systemDefault()).toLocalDate() }
-    val dayFormatter = remember { DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale.forLanguageTag("vi")) }
+    val grouped = items.groupBy { 
+        val sdf = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("vi"))
+        sdf.format(keyExtractor(it))
+    }
+    val dayFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("vi"))
 
     LazyColumn(contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         grouped.forEach { (date, itemsOnDate) ->
             stickyHeader {
-                DateHeader(dateText = date.format(dayFormatter))
+                DateHeader(dateText = date)
             }
             items(itemsOnDate) { item ->
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -242,8 +244,8 @@ fun EmptyLogView(logType: String) {
 @Composable
 fun MealLogItem(meal: ConsumedMeal, onDelete: () -> Unit) {
     val context = LocalContext.current
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    val time = Instant.ofEpochMilli(meal.consumedAt.time).atZone(ZoneId.systemDefault()).toLocalTime()
+    val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val time = timeFormatter.format(meal.consumedAt)
 
     val imageResId = remember(meal.imageRes) {
         val resId = context.resources.getIdentifier(meal.imageRes, "drawable", context.packageName)
@@ -263,7 +265,7 @@ fun MealLogItem(meal: ConsumedMeal, onDelete: () -> Unit) {
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(meal.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
-            Text("Lúc: ${time.format(timeFormatter)} - ${meal.mealType}", fontSize = 13.sp, color = Color.DarkGray)
+            Text("Lúc: $time - ${meal.mealType}", fontSize = 13.sp, color = Color.DarkGray)
         }
         Text("${meal.calories} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Black)
         IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete Meal", tint = Color.Red.copy(alpha=0.7f)) }
@@ -272,8 +274,8 @@ fun MealLogItem(meal: ConsumedMeal, onDelete: () -> Unit) {
 
 @Composable
 fun WorkoutLogItem(workout: ConsumedWorkout, onDelete: () -> Unit) {
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    val time = Instant.ofEpochMilli(workout.timestamp).atZone(ZoneId.systemDefault()).toLocalTime()
+    val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val time = timeFormatter.format(workout.timestamp)
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -290,7 +292,7 @@ fun WorkoutLogItem(workout: ConsumedWorkout, onDelete: () -> Unit) {
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(workout.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
-            Text("Lúc: ${time.format(timeFormatter)}", fontSize = 13.sp, color = Color.DarkGray)
+            Text("Lúc: $time", fontSize = 13.sp, color = Color.DarkGray)
         }
         Text("${workout.caloriesBurned} kcal", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.Black)
         IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete Workout", tint = Color.Red.copy(alpha=0.7f)) }

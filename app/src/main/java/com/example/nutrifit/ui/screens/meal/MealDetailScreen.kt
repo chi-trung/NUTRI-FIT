@@ -105,8 +105,9 @@ fun MealDetailContent(meal: Meal, navController: NavController, viewModel: MealV
                 .fillMaxWidth()
                 .height(250.dp)
         ) {
+            val imageResId = context.resources.getIdentifier(meal.imageRes, "drawable", context.packageName)
             Image(
-                painter = painterResource(id = if (meal.imageResId != 0) meal.imageResId else R.drawable.logo),
+                painter = painterResource(id = if (imageResId != 0) imageResId else R.drawable.logo),
                 contentDescription = meal.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -367,8 +368,7 @@ fun MealDetailScreenPreview() {
             id = 1, 
             name = "Ức gà và Khoai lang", 
             description = "Bữa ăn ngon và bổ dưỡng cho người tập luyện", 
-            imageRes = "", 
-            imageResId = R.drawable.uc_ga_bong_cai_xanh,
+            imageRes = "uc_ga_bong_cai_xanh",
             calories = 350, 
             time = "20-25 phút", 
             category = "Bữa chính",
@@ -376,7 +376,8 @@ fun MealDetailScreenPreview() {
             carbs = 30,
             fat = 10,
             difficulty = "Dễ",
-            instructions = "1. Sơ chế nguyên liệu...\n2. Nấu khoai lang...\n3. Chế biến ức gà..."
+            instructions = "1. Sơ chế nguyên liệu...\n2. Nấu khoai lang...\n3. Chế biến ức gà...",
+            suitableGoals = listOf("Tăng cơ", "Giảm mỡ")
         )
         MealDetailContent(meal = previewMeal, navController = navController, viewModel = viewModel())
     }

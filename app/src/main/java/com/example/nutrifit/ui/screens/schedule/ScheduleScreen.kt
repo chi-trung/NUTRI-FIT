@@ -34,8 +34,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.Exercise
-import com.example.nutrifit.data.model.Workout
-import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.theme.NutriFitTheme
 import com.example.nutrifit.viewmodel.CompletionState
 import com.example.nutrifit.viewmodel.DailySchedule
@@ -236,7 +234,6 @@ fun ScheduleHeader(
 
 @Composable
 fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, navController: NavController) {
-    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -261,19 +258,7 @@ fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, n
                             viewModel.handleCheckChanged(exercise, it, schedule.date)
                         },
                         onClick = {
-                            val videoResId = context.resources.getIdentifier(exercise.videoUrl, "raw", context.packageName)
-                            val workout = Workout(
-                                name = exercise.name,
-                                description = exercise.description,
-                                muscleGroup = exercise.muscleGroup,
-                                difficulty = exercise.difficulty,
-                                targets = exercise.targets,
-                                imageUrl = exercise.imageUrl,
-                                videoUrl = exercise.videoUrl,
-                                videoResId = videoResId
-                            )
-                            navController.currentBackStackEntry?.savedStateHandle?.set("workout", workout)
-                            navController.navigate(NavRoutes.WORKOUT_DETAIL)
+                            navController.navigate("workout_detail/${exercise.name}")
                         }
                     )
                     if (index < schedule.exercises.size - 1) {

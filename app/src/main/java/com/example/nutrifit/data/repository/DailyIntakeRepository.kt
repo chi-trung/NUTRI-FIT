@@ -78,11 +78,7 @@ class DailyIntakeRepository {
                 if (existingIntake != null && existingIntake.id.isNotEmpty()) {
                     db.document(existingIntake.id).update("consumedMeals", FieldValue.arrayUnion(meal)).await()
                 } else {
-                    val newIntake = DailyIntake(
-                        userId = userId,
-                        date = today,
-                        consumedMeals = listOf(meal)
-                    )
+                    val newIntake = DailyIntake(userId = userId, date = today, consumedMeals = listOf(meal))
                     db.add(newIntake).await()
                 }
                 Result.success(Unit)
@@ -104,11 +100,7 @@ class DailyIntakeRepository {
                 if (existingIntake != null && existingIntake.id.isNotEmpty()) {
                     db.document(existingIntake.id).update("consumedWorkouts", FieldValue.arrayUnion(workout)).await()
                 } else {
-                    val newIntake = DailyIntake(
-                        userId = userId,
-                        date = today,
-                        consumedWorkouts = listOf(workout)
-                    )
+                    val newIntake = DailyIntake(userId = userId, date = today, consumedWorkouts = listOf(workout))
                     db.add(newIntake).await()
                 }
                 Result.success(Unit)
@@ -122,7 +114,6 @@ class DailyIntakeRepository {
 
     suspend fun removeConsumedMeal(userId: String, meal: ConsumedMeal): Result<Unit> {
         return try {
-            // Find the document that contains the meal based on its consumption date
             val mealDate = meal.consumedAt
             val intakeResult = getDailyIntake(userId, mealDate)
 
@@ -144,18 +135,15 @@ class DailyIntakeRepository {
 
     suspend fun removeConsumedWorkout(userId: String, workout: ConsumedWorkout): Result<Unit> {
         return try {
-            // Find the document that contains the workout based on its timestamp
-            val workoutDate = Date(workout.timestamp)
+            val workoutDate = workout.timestamp
             val intakeResult = getDailyIntake(userId, workoutDate)
 
             if (intakeResult.isSuccess) {
                 val intake = intakeResult.getOrNull()
                 if (intake != null && intake.id.isNotEmpty()) {
                     db.document(intake.id).update("consumedWorkouts", FieldValue.arrayRemove(workout)).await()
-                    Result.success(Unit)
-                } else {
-                    Result.failure(Exception("No intake document found for that day to remove workout from."))
                 }
+                Result.success(Unit)
             } else {
                 Result.failure(intakeResult.exceptionOrNull() ?: Exception("Failed to find intake to remove workout."))
             }
@@ -171,9 +159,11 @@ class DailyIntakeRepository {
             if (existingIntakeResult.isSuccess) {
                 val existingIntake = existingIntakeResult.getOrNull()
                 if (existingIntake != null && existingIntake.id.isNotEmpty() && existingIntake.consumedWorkouts.isNotEmpty()) {
-                    val workoutToRemove = existingIntake.consumedWorkouts.find { it.name == workoutName }
-                    if (workoutToRemove != null) {
-                        db.document(existingIntake.id).update("consumedWorkouts", FieldValue.arrayRemove(workoutToRemove)).await()
+                    val currentWorkouts = existingIntake.consumedWorkouts.toMutableList()
+                    val workoutRemoved = currentWorkouts.removeIf { it.name == workoutName }
+
+                    if (workoutRemoved) {
+                        db.document(existingIntake.id).update("consumedWorkouts", currentWorkouts).await()
                     }
                 }
                 Result.success(Unit)

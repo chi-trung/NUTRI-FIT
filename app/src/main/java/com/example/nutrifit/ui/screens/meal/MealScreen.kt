@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -240,6 +241,8 @@ fun MealScreen(navController: NavController) {
 
 @Composable
 fun FeaturedMealCard(meal: Meal) {
+    val context = LocalContext.current
+    val imageResId = context.resources.getIdentifier(meal.imageRes, "drawable", context.packageName)
     // ... (rest of the file remains the same, using meal.imageResId for painters)
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(180.dp).background(
@@ -262,7 +265,7 @@ fun FeaturedMealCard(meal: Meal) {
                 }
             }
             Box(modifier = Modifier.size(140.dp).padding(start = 16.dp)) {
-                Image(painter = painterResource(id = if (meal.imageResId != 0) meal.imageResId else R.drawable.logo), contentDescription = meal.name, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                Image(painter = painterResource(id = if (imageResId != 0) imageResId else R.drawable.logo), contentDescription = meal.name, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
             }
         }
     }
@@ -281,12 +284,14 @@ fun FoodCategoryItem(category: FoodCategory, isSelected: Boolean, onClick: () ->
 
 @Composable
 fun MealCard(meal: Meal, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val imageResId = context.resources.getIdentifier(meal.imageRes, "drawable", context.packageName)
     Box(
         modifier = Modifier.width(190.dp).height(240.dp).clickable { onClick() }.border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp)).background(Color.White, RoundedCornerShape(14.dp)).padding(10.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.Start) {
             Image(
-                painter = painterResource(id = if (meal.imageResId != 0) meal.imageResId else R.drawable.logo),
+                painter = painterResource(id = if (imageResId != 0) imageResId else R.drawable.logo),
                 contentDescription = meal.name,
                 modifier = Modifier.fillMaxWidth().height(130.dp).clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
