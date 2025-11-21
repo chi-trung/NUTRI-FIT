@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,17 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.viewmodel.OnboardingViewModel
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(onStart: () -> Unit, viewModel: OnboardingViewModel = viewModel()) {
     val pages by viewModel.pages.collectAsState()
     val currentPage by viewModel.currentPage.collectAsState()
-    val pagerState = rememberPagerState(initialPage = currentPage)
+    val pagerState = rememberPagerState(initialPage = currentPage) { pages.size }
     val scope = rememberCoroutineScope()
     val colorScheme = MaterialTheme.colorScheme
 
@@ -68,7 +67,6 @@ fun OnboardingScreen(onStart: () -> Unit, viewModel: OnboardingViewModel = viewM
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         HorizontalPager(
-            count = pages.size,
             state = pagerState,
             modifier = Modifier.weight(1f),
             userScrollEnabled = currentPage != 0

@@ -2,6 +2,9 @@
 package com.example.nutrifit.ui.navigation
 
 import android.content.Context
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -144,7 +147,11 @@ fun AppNavHost() {
             NavHost(
                 navController = navController,
                 startDestination = startDestination ?: NavRoutes.Login,
-                modifier = Modifier
+                modifier = Modifier,
+                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                exitTransition = { fadeOut(animationSpec = tween(300)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(300)) },
+                popExitTransition = { fadeOut(animationSpec = tween(300)) }
             ) {
                 composable(NavRoutes.Onboarding) {
                     OnboardingScreen(onStart = {
