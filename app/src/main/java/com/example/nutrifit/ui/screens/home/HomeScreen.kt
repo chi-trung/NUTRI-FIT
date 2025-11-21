@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.rememberImagePainter
 import com.example.nutrifit.R
 import com.example.nutrifit.data.model.DailyIntake
@@ -381,7 +382,17 @@ fun HomeScreen(navController: NavController) {
 @Composable
 fun ActionButton(navController: NavController, route: String, iconRes: Int, label: String, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.padding(6.dp).clickable { navController.navigate(route) },
+        modifier = modifier
+            .padding(6.dp)
+            .clickable {
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         Image(painter = painterResource(id = R.drawable.khungnho4nut), contentDescription = "", modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.Crop)
