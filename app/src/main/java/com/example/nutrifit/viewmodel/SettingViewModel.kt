@@ -3,64 +3,57 @@ package com.example.nutrifit.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.data.model.User
-import com.example.nutrifit.data.repository.UserRepository
-import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 sealed class SettingUiState {
-    object Loading : SettingUiState()
     data class Success(val user: User, val providers: List<String>) : SettingUiState()
     data class Error(val message: String) : SettingUiState()
+    object Loading : SettingUiState()
 }
 
 class SettingViewModel : ViewModel() {
 
-    private val userRepository = UserRepository()
-    private val auth = FirebaseAuth.getInstance()
-
     private val _uiState = MutableStateFlow<SettingUiState>(SettingUiState.Loading)
-    val uiState: StateFlow<SettingUiState> = _uiState
+    val uiState: StateFlow<SettingUiState> = _uiState.asStateFlow()
 
     init {
-        fetchUserData()
+        loadUserData()
     }
 
-    fun fetchUserData() {
+    private fun loadUserData() {
         viewModelScope.launch {
-            _uiState.value = SettingUiState.Loading
-            val firebaseUser = auth.currentUser
-            if (firebaseUser == null) {
+            val firebaseAuthUser = Firebase.auth.currentUser
+            if (firebaseAuthUser == null) {
                 _uiState.value = SettingUiState.Error("User not logged in")
                 return@launch
             }
-            val userId = firebaseUser.uid
-            val providerIds = firebaseUser.providerData.map { it.providerId }
 
-            val result = userRepository.getUser(userId)
-            _uiState.value = result.fold(
-                onSuccess = { user -> SettingUiState.Success(user, providerIds) },
-                onFailure = { exception -> SettingUiState.Error(exception.message ?: "Failed to fetch user data") }
-            )
-        }
-    }
+            try {
+                val uid = firebaseAuthUser.uid
+                val firestore = Firebase.firestore
+                
+                // Lấy dữ liệu từ Firestore
+                val userDocument = firestore.collection("users").document(uid).get().await()
+                val userFromFirestore = userDocument.toObject<User>()
 
-    fun saveUserData(
-        name: String,
-        email: String
-    ) {
-        viewModelScope.launch {
-            val currentUiState = _uiState.value
-            if (currentUiState is SettingUiState.Success) {
-                val updatedUser = currentUiState.user.copy(
-                    name = name,
-                    email = email
-                )
-                userRepository.saveUser(updatedUser).fold(
-                    onSuccess = { _uiState.value = SettingUiState.Success(updatedUser, currentUiState.providers) },
-                    onFailure = { exception -> _uiState.value = SettingUiState.Error(exception.message ?: "Failed to save user data") }
-                )
+                if (userFromFirestore != null) {
+                    // Lấy danh sách nhà cung cấp đăng nhập từ Auth
+                    val providers = firebaseAuthUser.providerData.map { it.providerId }
+                    _uiState.value = SettingUiState.Success(userFromFirestore, providers)
+                } else {
+                     _uiState.value = SettingUiState.Error("User data not found in Firestore.")
+                }
+
+            } catch (e: Exception) {
+                _uiState.value = SettingUiState.Error(e.message ?: "An unknown error occurred")
             }
         }
     }

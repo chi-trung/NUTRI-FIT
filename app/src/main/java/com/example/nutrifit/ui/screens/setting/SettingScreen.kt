@@ -1,20 +1,59 @@
 package com.example.nutrifit.ui.screens.setting
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,26 +63,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.nutrifit.R
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.BorderStroke
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.ui.text.TextStyle
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.nutrifit.MainApplication
+import com.example.nutrifit.R
 import com.example.nutrifit.ui.navigation.NavRoutes
 import com.example.nutrifit.viewmodel.SettingUiState
 import com.example.nutrifit.viewmodel.SettingViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +87,88 @@ fun SettingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("notification_prefs", Context.MODE_PRIVATE) }
+    var notificationsEnabled by remember {
+        mutableStateOf(sharedPreferences.getBoolean("notifications_enabled", false))
+    }
+    var showBatteryInfoDialog by remember { mutableStateOf(false) }
+
+    if (showBatteryInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showBatteryInfoDialog = false },
+            title = { Text("Lưu ý Quan Trọng", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Để đảm bảo nhận thông báo đúng giờ, vui lòng kiểm tra Cài đặt Pin trên điện thoại:")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("∙ Tắt 'Quản lý ứng dụng nếu không dùng' (hoặc tương tự).", lineHeight = 20.sp)
+                    Text("∙ Bật 'Cho phép hoạt động dưới nền'.", lineHeight = 20.sp)
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showBatteryInfoDialog = false }) {
+                    Text("Đã hiểu")
+                }
+            }
+        )
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                notificationsEnabled = true
+                with(sharedPreferences.edit()) {
+                    putBoolean("notifications_enabled", true)
+                    apply()
+                }
+                MainApplication.scheduleAllDailyReminders(context)
+                Toast.makeText(context, "Đã bật thông báo.", Toast.LENGTH_SHORT).show()
+                showBatteryInfoDialog = true
+            } else {
+                Toast.makeText(context, "Bạn cần cấp quyền để nhận thông báo.", Toast.LENGTH_LONG).show()
+            }
+        }
+    )
+
+    fun handleNotificationSwitchChange(isEnabled: Boolean) {
+        if (isEnabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                when (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)) {
+                    PackageManager.PERMISSION_GRANTED -> {
+                        notificationsEnabled = true
+                        with(sharedPreferences.edit()) {
+                            putBoolean("notifications_enabled", true)
+                            apply()
+                        }
+                        MainApplication.scheduleAllDailyReminders(context)
+                        Toast.makeText(context, "Đã bật thông báo.", Toast.LENGTH_SHORT).show()
+                        showBatteryInfoDialog = true
+                    }
+                    else -> {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            } else {
+                notificationsEnabled = true
+                with(sharedPreferences.edit()) {
+                    putBoolean("notifications_enabled", true)
+                    apply()
+                }
+                MainApplication.scheduleAllDailyReminders(context)
+                Toast.makeText(context, "Đã bật thông báo.", Toast.LENGTH_SHORT).show()
+                showBatteryInfoDialog = true
+            }
+        } else {
+            notificationsEnabled = false
+            with(sharedPreferences.edit()) {
+                putBoolean("notifications_enabled", false)
+                apply()
+            }
+            MainApplication.cancelAllDailyReminders(context)
+            Toast.makeText(context, "Đã tắt thông báo.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     when (val state = uiState) {
         is SettingUiState.Loading -> {
@@ -73,8 +187,6 @@ fun SettingScreen(
             val height by remember { mutableStateOf(user.height ?: "") }
             val weight by remember { mutableStateOf(user.weight ?: "") }
             val goal by remember { mutableStateOf(user.goal ?: "") }
-            var twoFactorAuth by remember { mutableStateOf(false) }
-            var notificationsEnabled by remember { mutableStateOf(false) }
 
             Scaffold(
                 content = { paddingValues ->
@@ -355,53 +467,6 @@ fun SettingScreen(
                                         )
                                     }
 
-                                    // Block 1: Đổi mật khẩu
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = "Đổi mật khẩu",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                color = Color(0xFF1A1A1A)
-                                            )
-                                            Text(
-                                                text = "Cập nhật mật khẩu để bảo vệ tài khoản",
-                                                fontSize = 14.sp,
-                                                color = Color(0xFF9E9E9E),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-
-                                        OutlinedButton(
-                                            onClick = { /* Handle change password */ },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = Color.Black
-                                            ),
-                                            modifier = Modifier.height(40.dp)
-                                        ) {
-                                            Text(
-                                                text = "Đổi mật khẩu",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-
-                                    // Divider
-                                    Divider(
-                                        color = Color(0xFFE0E0E0),
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
 
                                     // Block 3: Liên kết tài khoản
                                     Column {
@@ -564,7 +629,7 @@ fun SettingScreen(
                                             )
                                     ) {
                                         Text(
-                                            text = "3. Cài đặt tài khoản",
+                                            text = "3. Cài đặt thông báo",
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF3B66FF),
@@ -602,7 +667,7 @@ fun SettingScreen(
 
                                         Switch(
                                             checked = notificationsEnabled,
-                                            onCheckedChange = { notificationsEnabled = it },
+                                            onCheckedChange = { handleNotificationSwitchChange(it) },
                                             colors = SwitchDefaults.colors(
                                                 checkedThumbColor = Color(0xFF3B66FF),
                                                 checkedTrackColor = Color(0xFF3B66FF).copy(alpha = 0.5f),
@@ -610,6 +675,17 @@ fun SettingScreen(
                                                 uncheckedTrackColor = Color(0xFFE0E0E0)
                                             )
                                         )
+                                    }
+
+                                    // Test Notification Button
+                                    Button(
+                                        onClick = {
+                                            MainApplication.scheduleTestNotification(context)
+                                            Toast.makeText(context, "Đã lên lịch thông báo thử nghiệm sau 1 phút.", Toast.LENGTH_LONG).show()
+                                        },
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                    ) {
+                                        Text(text = "Gửi thông báo thử nghiệm")
                                     }
                                 }
                             }
@@ -711,7 +787,14 @@ fun SettingScreen(
                             ) {
                                 Button(
                                     onClick = {
-                                        // ✅ Xóa flag profile và signOut
+                                        // Hủy tất cả thông báo khi đăng xuất
+                                        MainApplication.cancelAllDailyReminders(context)
+                                        with(sharedPreferences.edit()) {
+                                            putBoolean("notifications_enabled", false)
+                                            apply()
+                                        }
+
+                                        // Xóa flag profile và signOut
                                         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                                         val userId = FirebaseAuth.getInstance().currentUser?.uid
 

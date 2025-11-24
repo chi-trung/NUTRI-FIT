@@ -2,8 +2,9 @@ package com.example.nutrifit.data.repository
 
 import android.app.Application
 import android.content.Context
+import com.example.nutrifit.MainApplication
 
-class SettingsRepository(application: Application) {
+class SettingsRepository(private val application: Application) {
 
     private val sharedPreferences = application.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
 
@@ -27,6 +28,13 @@ class SettingsRepository(application: Application) {
             putBoolean("notifications", notifications)
             putBoolean("twoFactor", twoFactor)
             apply()
+        }
+
+        // Thêm logic WorkManager vào đây
+        if (notifications) {
+            MainApplication.scheduleAllDailyReminders(application.applicationContext)
+        } else {
+            MainApplication.cancelAllDailyReminders(application.applicationContext)
         }
     }
 }
