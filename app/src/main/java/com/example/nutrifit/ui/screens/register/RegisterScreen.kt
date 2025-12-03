@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -131,12 +134,14 @@ fun RegisterScreen(
             contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
 
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .align(Alignment.Center)
-                .padding(horizontal = 20.dp)
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
@@ -150,8 +155,7 @@ fun RegisterScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(horizontal = 8.dp)
-                        .verticalScroll(rememberScrollState()),
+                        .padding(horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     HeaderSection(onBackToLogin = onBackToLogin)
@@ -270,6 +274,9 @@ fun RegisterForm(
     focusManager: FocusManager,
     onRegisterClick: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = "Email", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
         CustomTextField(
@@ -277,7 +284,15 @@ fun RegisterForm(
             onValueChange = onEmailChange,
             placeholder = "Nhập email",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            focusManager = focusManager
+            focusManager = focusManager,
+            modifier = Modifier.onFocusEvent {
+                if (it.isFocused) {
+                    scope.launch {
+                        delay(200)
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                }
+            }
         )
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -286,7 +301,15 @@ fun RegisterForm(
             value = password,
             onValueChange = onPasswordChange,
             placeholder = "Nhập mật khẩu",
-            focusManager = focusManager
+            focusManager = focusManager,
+            modifier = Modifier.onFocusEvent {
+                if (it.isFocused) {
+                    scope.launch {
+                        delay(200)
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                }
+            }
         )
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -295,7 +318,15 @@ fun RegisterForm(
             value = confirmPassword,
             onValueChange = onConfirmPasswordChange,
             placeholder = "Nhập lại mật khẩu",
-            focusManager = focusManager
+            focusManager = focusManager,
+            modifier = Modifier.onFocusEvent {
+                if (it.isFocused) {
+                    scope.launch {
+                        delay(200)
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                }
+            }
         )
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -307,7 +338,10 @@ fun RegisterForm(
 
         Button(
             onClick = onRegisterClick,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .bringIntoViewRequester(bringIntoViewRequester),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NutriColor)
         ) {

@@ -77,8 +77,8 @@
             implementation(libs.coil.compose)
 
             // ML Kit
-            implementation("com.google.mlkit:image-labeling:17.0.7")
-            implementation("com.google.mlkit:image-labeling-custom:17.0.1")
+            implementation("com.google.mlkit:image-labeling:17.0.9")
+            implementation("com.google.mlkit:image-labeling-custom:17.0.3")
 
             // Retrofit + OkHttp + Gson
             implementation("com.squareup.retrofit2:retrofit:2.9.0")
