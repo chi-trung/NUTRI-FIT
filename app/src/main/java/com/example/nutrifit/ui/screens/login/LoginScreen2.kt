@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
-import com.example.nutrifit.viewmodel.AuthViewModel
+import com.example.nutrifit.viewmodel.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -59,7 +59,7 @@ private val GitHubButtonColor = Color(0xFF24292E)
 
 @Composable
 fun LoginScreen2(
-    onLogin: (AuthViewModel.NextScreen) -> Unit,
+    onLogin: (LoginViewModel.NextScreen) -> Unit,
     onFirstLogin: () -> Unit,
     onGoRegister: () -> Unit,
     onGoBack: () -> Unit,
@@ -68,7 +68,7 @@ fun LoginScreen2(
 ) {
     val context = LocalContext.current
     val activity = context as android.app.Activity
-    val viewModel: AuthViewModel = viewModel()
+    val viewModel: LoginViewModel = viewModel()
 
     LaunchedEffect(Unit) {
         viewModel.initGoogleSignIn(context)
@@ -86,14 +86,16 @@ fun LoginScreen2(
 
     LaunchedEffect(authState) {
         when (val state = authState) {
-            is AuthViewModel.AuthState.Success -> {
+            is LoginViewModel.AuthState.Success -> {
                 onLogin(state.nextScreen)
             }
-            is AuthViewModel.AuthState.EmailNotVerified -> { // ✅ THÊM case mới: Navigate đến EmailVerificationScreen với email từ state
-                onEmailNotVerified(state.email)  // ✅ SỬA: Sử dụng state.email thay vì biến local 'email'
+            is LoginViewModel.AuthState.EmailNotVerified -> { 
+                onEmailNotVerified(state.email)
+                viewModel.resetAuthState() // Reset state
             }
-            is AuthViewModel.AuthState.Error -> {
+            is LoginViewModel.AuthState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                viewModel.resetAuthState() // Reset state
             }
             else -> {}
         }
@@ -275,7 +277,7 @@ fun LoginForm2(
     rememberMe: Boolean,
     onRememberMeChange: (Boolean) -> Unit,
     focusManager: FocusManager,
-    viewModel: AuthViewModel,
+    viewModel: LoginViewModel,
     onForgotPw: () -> Unit,
     onGoRegister: () -> Unit
 ) {

@@ -7,22 +7,16 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,38 +31,36 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
-import com.example.nutrifit.viewmodel.AuthViewModel
-import com.example.nutrifit.viewmodel.RegisterViewModel  // ✅ SỬA: Import từ package đúng
+import com.example.nutrifit.theme.CornerRadius
+import com.example.nutrifit.theme.NutriColor
+import com.example.nutrifit.ui.components.CustomTextField
+import com.example.nutrifit.ui.components.PasswordTextField
+import com.example.nutrifit.ui.components.SocialLoginButton
+import com.example.nutrifit.viewmodel.LoginViewModel
+import com.example.nutrifit.viewmodel.RegisterViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// Định nghĩa các màu sắc
-private val NutriColor = Color(0xFF1AC9AC)
-private val BackgroundColor = Color(0xFFF5F5F5)
-private val CornerRadius = 16.dp
-private val GoogleButtonColor = Color(0xFF4285F4) // Màu Google blue
-private val FacebookButtonColor = Color(0xFF1877F2) // Màu Facebook blue
-private val GitHubButtonColor = Color(0xFF000000) // Màu GitHub (đen)
+val GitHubButtonColor = Color(0xFF000000) // Màu GitHub (đen)
+val GoogleButtonColor = Color(0xFF4285F4) // Màu Google
 
 @Composable
 fun RegisterScreen(
     onRegister: () -> Unit,
     onBackToLogin: () -> Unit,
-    onEmailVerification: (String, String) -> Unit // ✅ THÊM callback mới với source
+    onEmailVerification: (String, String) -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as android.app.Activity
-    val socialAuthViewModel: AuthViewModel = viewModel()
+    val socialAuthViewModel: LoginViewModel = viewModel()
     val registerViewModel: RegisterViewModel = viewModel() // ViewModel cho đăng ký email
 
     // --- Xử lý đăng nhập Social (Giữ nguyên) ---
@@ -85,11 +77,11 @@ fun RegisterScreen(
     val socialAuthState by socialAuthViewModel.authState.collectAsState()
     LaunchedEffect(socialAuthState) {
         when (socialAuthState) {
-            is AuthViewModel.AuthState.Success -> {
+            is LoginViewModel.AuthState.Success -> {
                 onRegister()
             }
-            is AuthViewModel.AuthState.Error -> {
-                Toast.makeText(context, (socialAuthState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_SHORT).show()
+            is LoginViewModel.AuthState.Error -> {
+                Toast.makeText(context, (socialAuthState as LoginViewModel.AuthState.Error).message, Toast.LENGTH_SHORT).show()
             }
             else -> {}
         }
@@ -100,34 +92,30 @@ fun RegisterScreen(
     val registrationState by registerViewModel.registrationState.collectAsState()
     var isLoading by remember { mutableStateOf(false) }
 
-    // ✅ Lưu email vào state để pass vào callback
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    // ✅ SỬA: Thêm else branch để fix "'when' expression must be exhaustive"
     LaunchedEffect(registrationState) {
         when (val state = registrationState) {
-            is RegisterViewModel.RegistrationState.Success -> { // ✅ SỬA: Thay vì Error, dùng Success để navigate
+            is RegisterViewModel.RegistrationState.Success -> {
                 isLoading = false
-                // ✅ Navigate đến EmailVerificationScreen với email và source
+                // Navigate đến EmailVerificationScreen với email và source
                 onEmailVerification(email, "register")
                 registerViewModel.resetState()
             }
             is RegisterViewModel.RegistrationState.Error -> {
                 isLoading = false
-                Toast.makeText(context, "Đăng ký thất bại: ${state.message}", Toast.LENGTH_SHORT).show()
+                // Hiển thị thông báo lỗi trực tiếp từ ViewModel
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                registerViewModel.resetState()
             }
             is RegisterViewModel.RegistrationState.Loading -> {
                 isLoading = true
             }
             is RegisterViewModel.RegistrationState.Idle -> {
-                isLoading = false
-            }
-            else -> {
-                // ✅ THÊM: Else branch để tránh lỗi "must be exhaustive" (mặc dù sealed class không cần)
                 isLoading = false
             }
         }
@@ -181,20 +169,9 @@ fun RegisterScreen(
                         onRememberMeChange = { rememberMe = it },
                         focusManager = focusManager,
                         onRegisterClick = {
-                            if (email.isBlank() || !email.contains("@")) {
-                                Toast.makeText(context, "Email không hợp lệ", Toast.LENGTH_SHORT).show()
-                                return@RegisterForm
-                            }
-                            if (password.length < 8) {
-                                Toast.makeText(context, "Mật khẩu phải có ít nhất 8 ký tự", Toast.LENGTH_SHORT).show()
-                                return@RegisterForm
-                            }
-                            if (password != confirmPassword) {
-                                Toast.makeText(context, "Mật khẩu xác nhận không khớp", Toast.LENGTH_SHORT).show()
-                                return@RegisterForm
-                            }
-                            // Gọi ViewModel để xử lý logic
-                            registerViewModel.registerWithEmailAndPassword(email, password)
+                            // Logic validation đã được chuyển vào ViewModel.
+                            // UI chỉ cần gọi phương thức của ViewModel.
+                            registerViewModel.registerWithEmailAndPassword(email, password, confirmPassword)
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -241,7 +218,7 @@ fun HeaderSection(onBackToLogin: () -> Unit) {
                 .scale(backScale)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false, radius = 20.dp, color = Color.Gray)
+                    indication = null
                 ) {
                     isBackPressed = true
                     onBackToLogin()
@@ -345,110 +322,7 @@ fun SocialLoginSection(
     onGitHubLogin: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SocialLoginButton(icon = R.drawable.google, text = "Đăng nhập với Google", buttonColor = GoogleButtonColor, onClick = onGoogleLogin)
-        SocialLoginButton(icon = R.drawable.github, text = "Đăng nhập với GitHub", buttonColor = GitHubButtonColor, onClick = onGitHubLogin)
+        SocialLoginButton(icon = R.drawable.google, text = "Đăng nhập với Google", onClick = onGoogleLogin, buttonColor = GoogleButtonColor)
+        SocialLoginButton(icon = R.drawable.github, text = "Đăng nhập với GitHub", onClick = onGitHubLogin, buttonColor = GitHubButtonColor)
     }
-}
-
-@Composable
-fun SocialLoginButton(
-    icon: Int,
-    text: String,
-    buttonColor: Color,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(44.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Image(painter = painterResource(id = icon), contentDescription = "$text Login", modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
-        }
-    }
-}
-
-@Composable
-fun CustomTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    focusManager: FocusManager,
-    modifier: Modifier = Modifier
-) {
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(width = 1.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp))
-            .background(Color.Transparent)
-            .padding(horizontal = 12.dp),
-        keyboardOptions = keyboardOptions,
-        visualTransformation = visualTransformation,
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        decorationBox = { innerTextField ->
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (value.isEmpty()) {
-                    Text(text = placeholder, fontSize = 14.sp, color = Color.Gray)
-                }
-                innerTextField()
-            }
-        }
-    )
-}
-
-@Composable
-fun PasswordTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    focusManager: FocusManager,
-    modifier: Modifier = Modifier
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(width = 1.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp))
-            .background(Color.Transparent)
-            .padding(horizontal = 12.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        decorationBox = { innerTextField ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (value.isEmpty()) {
-                        Text(text = placeholder, fontSize = 14.sp, color = Color.Gray)
-                    }
-                    innerTextField()
-                }
-                Icon(
-                    imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu",
-                    modifier = Modifier.size(20.dp)
-                        .clickable { passwordVisible = !passwordVisible },
-                    tint = Color.Gray
-                )
-            }
-        }
-    )
 }

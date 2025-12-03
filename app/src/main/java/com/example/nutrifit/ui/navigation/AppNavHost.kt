@@ -1,39 +1,36 @@
-
 package com.example.nutrifit.ui.navigation
 
 import android.content.Context
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.fillMaxSize
+import com.example.nutrifit.data.repository.UserRepository
 import com.example.nutrifit.ui.components.BottomNavBar
 import com.example.nutrifit.ui.screens.ScanScreen.ScanScreen
 import com.example.nutrifit.ui.screens.dailylog.DailyLogScreen
@@ -50,15 +47,16 @@ import com.example.nutrifit.ui.screens.profile.ProfileScreen
 import com.example.nutrifit.ui.screens.register.RegisterScreen
 import com.example.nutrifit.ui.screens.schedule.ScheduleScreen
 import com.example.nutrifit.ui.screens.setting.SettingScreen
-import com.example.nutrifit.ui.screens.terms.TermsOfServiceScreen
 import com.example.nutrifit.ui.screens.target.TargetScreen
+import com.example.nutrifit.ui.screens.terms.TermsOfServiceScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutDetailScreen
 import com.example.nutrifit.ui.screens.workout.WorkoutScreen
-import com.example.nutrifit.viewmodel.SettingViewModel
 import com.example.nutrifit.viewmodel.ForgotPasswordViewModel
-import com.example.nutrifit.viewmodel.AuthViewModel
+import com.example.nutrifit.viewmodel.LoginViewModel
+import com.example.nutrifit.viewmodel.SettingViewModel
 import com.example.nutrifit.viewmodel.WorkoutViewModel
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -78,9 +76,8 @@ fun AppNavHost() {
     LaunchedEffect(currentUser, hasSeenOnboarding) {
         startDestination = when {
             currentUser?.isEmailVerified == true -> {
-                // Kiểm tra user data từ Firestore để quyết định màn hình tiếp theo
                 try {
-                    val userRepository = com.example.nutrifit.data.repository.UserRepository()
+                    val userRepository = UserRepository()
                     val userData = userRepository.getUser(currentUser.uid)
                     if (userData.isSuccess) {
                         val userInfo = userData.getOrNull()
@@ -90,11 +87,9 @@ fun AppNavHost() {
                             else -> NavRoutes.Home
                         }
                     } else {
-                        // New user - chưa có data trên Firestore
                         NavRoutes.Profile
                     }
                 } catch (e: Exception) {
-                    // Nếu có lỗi, mặc định đi Profile
                     NavRoutes.Profile
                 }
             }
@@ -135,7 +130,6 @@ fun AppNavHost() {
         }
     ) { paddingValues ->
         if (isLoading) {
-            // Hiển thị loading screen trong khi kiểm tra user data
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -147,7 +141,7 @@ fun AppNavHost() {
             NavHost(
                 navController = navController,
                 startDestination = startDestination ?: NavRoutes.Login,
-                modifier = Modifier,
+                modifier = Modifier.padding(paddingValues),
                 enterTransition = { fadeIn(animationSpec = tween(300)) },
                 exitTransition = { fadeOut(animationSpec = tween(300)) },
                 popEnterTransition = { fadeIn(animationSpec = tween(300)) },
@@ -155,7 +149,7 @@ fun AppNavHost() {
             ) {
                 composable(NavRoutes.Onboarding) {
                     OnboardingScreen(onStart = {
-                        sharedPref.edit().putBoolean("has_seen_onboarding", true).apply()
+                        sharedPref.edit { putBoolean("has_seen_onboarding", true) }
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(NavRoutes.Onboarding) { inclusive = true }
                         }
@@ -166,9 +160,9 @@ fun AppNavHost() {
                     LoginScreen(
                         onLogin = { nextScreen ->
                             val route = when (nextScreen) {
-                                AuthViewModel.NextScreen.Profile -> NavRoutes.Profile
-                                AuthViewModel.NextScreen.Target -> NavRoutes.Target
-                                AuthViewModel.NextScreen.Home -> NavRoutes.Home
+                                LoginViewModel.NextScreen.Profile -> NavRoutes.Profile
+                                LoginViewModel.NextScreen.Target -> NavRoutes.Target
+                                LoginViewModel.NextScreen.Home -> NavRoutes.Home
                             }
                             navController.navigate(route) {
                                 popUpTo(NavRoutes.Login) { inclusive = true }
@@ -185,14 +179,13 @@ fun AppNavHost() {
                     )
                 }
 
-                // ✨ SỬA LoginScreen2 - THÊM CALLBACK onEmailNotVerified
                 composable(NavRoutes.Login2) {
                     LoginScreen2(
                         onLogin = { nextScreen ->
                             val route = when (nextScreen) {
-                                AuthViewModel.NextScreen.Profile -> NavRoutes.Profile
-                                AuthViewModel.NextScreen.Target -> NavRoutes.Target
-                                AuthViewModel.NextScreen.Home -> NavRoutes.Home
+                                LoginViewModel.NextScreen.Profile -> NavRoutes.Profile
+                                LoginViewModel.NextScreen.Target -> NavRoutes.Target
+                                LoginViewModel.NextScreen.Home -> NavRoutes.Home
                             }
                             navController.navigate(route) {
                                 popUpTo(NavRoutes.Login2) { inclusive = true }
@@ -206,30 +199,26 @@ fun AppNavHost() {
                         onGoRegister = { navController.navigate(NavRoutes.Register) },
                         onGoBack = { navController.popBackStack() },
                         onForgotPw = { navController.navigate(NavRoutes.ForgotPw) },
-                        onEmailNotVerified = { email -> // ✨ THÊM MỚI
+                        onEmailNotVerified = { email ->
                             navController.navigate("${NavRoutes.EmailVerification}/$email/login")
                         }
                     )
                 }
 
-                // ✨ SỬA RegisterScreen - THÊM CALLBACK onEmailVerification
                 composable(NavRoutes.Register) {
                     RegisterScreen(
-                        onRegister = {
-                            // Không cần navigate ở đây nữa vì RegisterScreen sẽ tự handle
-                        },
+                        onRegister = { },
                         onBackToLogin = {
                             navController.navigate(NavRoutes.Login2) {
                                 popUpTo(NavRoutes.Login2) { inclusive = true }
                             }
                         },
-                        onEmailVerification = { email, source -> // ✨ THÊM MỚI
+                        onEmailVerification = { email, source ->
                             navController.navigate("${NavRoutes.EmailVerification}/$email/$source")
                         }
                     )
                 }
 
-                // ✨ THÊM MỚI - EmailVerificationScreen
                 composable(
                     route = "${NavRoutes.EmailVerification}/{email}/{source}",
                     arguments = listOf(
@@ -247,13 +236,11 @@ fun AppNavHost() {
                         email = email,
                         source = source,
                         onVerificationSuccess = {
-                            // Sau khi verify thành công -> Kiểm tra user data trên Firestore để quyết định màn hình tiếp theo
                             val currentUser = FirebaseAuth.getInstance().currentUser
                             if (currentUser != null) {
-                                // Kiểm tra user data từ Firestore
-                                val userRepository = com.example.nutrifit.data.repository.UserRepository()
                                 scope.launch {
                                     try {
+                                        val userRepository = UserRepository()
                                         val userData = userRepository.getUser(currentUser.uid)
                                         val nextRoute = if (userData.isSuccess) {
                                             val userInfo = userData.getOrNull()
@@ -263,21 +250,18 @@ fun AppNavHost() {
                                                 else -> NavRoutes.Home
                                             }
                                         } else {
-                                            // New user - chưa có data trên Firestore
                                             NavRoutes.Profile
                                         }
                                         navController.navigate(nextRoute) {
                                             popUpTo(NavRoutes.EmailVerification) { inclusive = true }
                                         }
-                                    } catch (e: Exception) {
-                                        // Nếu có lỗi, mặc định đi Profile
+                                    } catch (_: Exception) {
                                         navController.navigate(NavRoutes.Profile) {
                                             popUpTo(NavRoutes.EmailVerification) { inclusive = true }
                                         }
                                     }
                                 }
                             } else {
-                                // Fallback nếu không có currentUser
                                 navController.navigate(NavRoutes.Profile) {
                                     popUpTo(NavRoutes.EmailVerification) { inclusive = true }
                                 }
@@ -312,20 +296,11 @@ fun AppNavHost() {
                 composable(NavRoutes.Profile) {
                     ProfileScreen(
                         onNextClicked = {
-                            navController.navigate(NavRoutes.Target)
+                            navController.navigate(NavRoutes.Target) {
+                                popUpTo(NavRoutes.Profile) { inclusive = true }
+                            }
                         }
                     )
-                }
-
-                composable(NavRoutes.Setting) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        val settingViewModel: SettingViewModel = viewModel()
-                        SettingScreen(
-                            onBackClick = { navController.popBackStack() },
-                            navController = navController,
-                            viewModel = settingViewModel
-                        )
-                    }
                 }
 
                 composable(NavRoutes.Target) {
@@ -335,36 +310,26 @@ fun AppNavHost() {
                         },
                         onNextClicked = {
                             navController.navigate(NavRoutes.Home) {
-                                popUpTo(NavRoutes.Profile) { inclusive = true }
+                                popUpTo(NavRoutes.Target) { inclusive = true }
                             }
                         }
                     )
                 }
 
                 composable(NavRoutes.Home) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        HomeScreen(navController)
-                    }
+                    HomeScreen(navController)
                 }
                 composable(NavRoutes.Meal) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        MealScreen(navController)
-                    }
+                    MealScreen(navController)
                 }
                 composable(NavRoutes.DailyLog) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        DailyLogScreen(navController)
-                    }
+                    DailyLogScreen(navController)
                 }
                 composable(NavRoutes.Workout) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        WorkoutScreen(navController)
-                    }
+                    WorkoutScreen(navController)
                 }
                 composable(NavRoutes.Map) {
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        MapScreen()
-                    }
+                    MapScreen()
                 }
 
                 composable(NavRoutes.Terms) {
@@ -394,6 +359,14 @@ fun AppNavHost() {
                 }
                 composable(NavRoutes.Scan) {
                     ScanScreen(navController)
+                }
+                composable(NavRoutes.Setting) {
+                    val settingViewModel: SettingViewModel = viewModel()
+                    SettingScreen(
+                        onBackClick = { navController.popBackStack() },
+                        navController = navController,
+                        viewModel = settingViewModel
+                    )
                 }
             }
         }

@@ -29,11 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nutrifit.R
-import com.example.nutrifit.viewmodel.AuthViewModel
+import com.example.nutrifit.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    onLogin: (AuthViewModel.NextScreen) -> Unit,
+    onLogin: (LoginViewModel.NextScreen) -> Unit,
     onFirstLogin: () -> Unit,
     onGoRegister: () -> Unit,
     onForgotPw: () -> Unit,
@@ -41,7 +41,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val activity = context as Activity
-    val viewModel: AuthViewModel = viewModel()
+    val viewModel: LoginViewModel = viewModel()
 
     LaunchedEffect(Unit) {
         viewModel.initGoogleSignIn(context)
@@ -59,10 +59,10 @@ fun LoginScreen(
 
     LaunchedEffect(authState) {
         when (val state = authState) {
-            is AuthViewModel.AuthState.Success -> {
+            is LoginViewModel.AuthState.Success -> {
                 onLogin(state.nextScreen)
             }
-            is AuthViewModel.AuthState.Error -> {
+            is LoginViewModel.AuthState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
             }
             else -> {}

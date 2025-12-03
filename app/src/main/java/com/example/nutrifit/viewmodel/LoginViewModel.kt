@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrifit.data.repository.UserRepository
+import com.example.nutrifit.utils.InputValidator
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @Suppress("DEPRECATION")
-class AuthViewModel : ViewModel() {
+class LoginViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val userRepository = UserRepository()
 
@@ -59,8 +60,18 @@ class AuthViewModel : ViewModel() {
         return googleSignInClient.signInIntent
     }
 
-    // Sửa signInWithEmail để kiểm tra email verification
     fun signInWithEmail(email: String, password: String) {
+        // --- VALIDATION START ---
+        if (!InputValidator.isFieldNotEmpty(email) || !InputValidator.isFieldNotEmpty(password)) {
+            _authState.value = AuthState.Error("Vui lòng nhập đầy đủ thông tin")
+            return
+        }
+        if (!InputValidator.isValidEmail(email)) {
+            _authState.value = AuthState.Error("Định dạng email không hợp lệ")
+            return
+        }
+        // --- VALIDATION END ---
+
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
@@ -72,14 +83,12 @@ class AuthViewModel : ViewModel() {
                     return@launch
                 }
 
-                // Kiểm tra email verification - đăng xuất nếu chưa verify
                 if (!user.isEmailVerified) {
                     auth.signOut()
-                    _authState.value = AuthState.EmailNotVerified(email) // ✅ SỬA: Emit với email thay vì object trống
+                    _authState.value = AuthState.EmailNotVerified(email)
                     return@launch
                 }
 
-                // Email đã verify → kiểm tra new user và cho login
                 checkNewUser(user)
 
             } catch (e: Exception) {
@@ -156,7 +165,6 @@ class AuthViewModel : ViewModel() {
                     else -> NextScreen.Home
                 }
             } else {
-                // New user - chưa có data
                 NextScreen.Profile
             }
             _authState.value = AuthState.Success(user, nextScreen)
