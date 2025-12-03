@@ -61,13 +61,12 @@
             implementation(libs.androidx.compose.material.icons.extended)
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
-            implementation(libs.androidx.compose.ui.test)
             implementation(libs.androidx.compose.ui.text)
-            implementation(libs.androidx.ui.tooling)
             debugImplementation(libs.androidx.compose.ui.tooling)
             debugImplementation(libs.androidx.compose.ui.test.manifest)
             androidTestImplementation(platform(libs.androidx.compose.bom))
             androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+            androidTestImplementation(libs.androidx.compose.ui.test)
 
             // Accompanist
             implementation(libs.accompanist.pager)
@@ -85,7 +84,6 @@
             implementation("com.squareup.retrofit2:retrofit:2.9.0")
             implementation("com.squareup.retrofit2:converter-gson:2.9.0")
             implementation("com.squareup.okhttp3:okhttp:4.11.0")
-            implementation("com.google.code.gson:gson:2.10.1")
             implementation(libs.gson)
             implementation("org.json:json:20231013")
 
@@ -103,10 +101,6 @@
             implementation(libs.threetenabp)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
             implementation(libs.kotlinx.coroutines.play.services)
-
-            // Lifecycle (explicit)
-            implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-            implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
             // Room
             implementation(libs.androidx.room.runtime)
