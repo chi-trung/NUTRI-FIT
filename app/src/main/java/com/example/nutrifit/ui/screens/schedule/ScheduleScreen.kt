@@ -252,6 +252,7 @@ fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, n
                 Text("Hôm nay là ngày nghỉ! Hãy nghỉ ngơi và phục hồi.", modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray)
             } else {
                 schedule.exercises.forEachIndexed { index, exercise ->
+                    val isEnabled = schedule.date == LocalDate.now()
                     ExerciseItem(
                         exercise = exercise,
                         onCheckedChange = {
@@ -259,7 +260,8 @@ fun ScheduleDetailsCard(schedule: DailySchedule, viewModel: ScheduleViewModel, n
                         },
                         onClick = {
                             navController.navigate("workout_detail/${exercise.name}")
-                        }
+                        },
+                        isEnabled = isEnabled
                     )
                     if (index < schedule.exercises.size - 1) {
                         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
@@ -316,7 +318,8 @@ fun DayItemNew(schedule: DailySchedule, isToday: Boolean, isSelected: Boolean, i
 fun ExerciseItem(
     exercise: Exercise,
     onCheckedChange: (Boolean) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isEnabled: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -359,9 +362,12 @@ fun ExerciseItem(
         Checkbox(
             checked = exercise.isCompleted,
             onCheckedChange = onCheckedChange,
+            enabled = isEnabled,
             colors = CheckboxDefaults.colors(
                 checkedColor = Color(0xFF4CAF50),
-                uncheckedColor = Color.Gray
+                uncheckedColor = Color(0xFF4361EE),
+                disabledCheckedColor = Color(0xFF4CAF50).copy(alpha = 0.4f),
+                disabledUncheckedColor = Color.Gray.copy(alpha = 0.4f)
             )
         )
     }

@@ -118,6 +118,12 @@ class ScheduleViewModel : ViewModel() {
     }
 
     fun handleCheckChanged(exercise: Exercise, isChecked: Boolean, date: LocalDate) {
+        if (date != LocalDate.now()) {
+            viewModelScope.launch {
+                _completionState.value = CompletionState.Error("Chỉ được phép chỉnh sửa bài tập trong ngày hôm nay.")
+            }
+            return
+        }
         // --- Cập nhật giao diện ngay lập tức ---
         val currentState = _scheduleState.value
         if (currentState is ScheduleState.Success) {
