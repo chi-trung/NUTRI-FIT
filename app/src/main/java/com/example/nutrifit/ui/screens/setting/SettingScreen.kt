@@ -676,17 +676,6 @@ fun SettingScreen(
                                             )
                                         )
                                     }
-
-                                    // Test Notification Button
-                                    Button(
-                                        onClick = {
-                                            MainApplication.scheduleTestNotification(context)
-                                            Toast.makeText(context, "Đã lên lịch thông báo thử nghiệm sau 1 phút.", Toast.LENGTH_LONG).show()
-                                        },
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                                    ) {
-                                        Text(text = "Gửi thông báo thử nghiệm")
-                                    }
                                 }
                             }
 

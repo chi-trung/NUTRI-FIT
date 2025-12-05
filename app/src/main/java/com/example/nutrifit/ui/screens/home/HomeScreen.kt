@@ -106,7 +106,7 @@ fun HomeScreen(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Box(modifier = Modifier.padding(top = 10.dp, end = 30.dp).clickable { navController.navigate(NavRoutes.Profile) }) {
+                        Box(modifier = Modifier.padding(top = 10.dp, end = 30.dp)) {
                             Image(
                                 painter = painterResource(id = R.drawable.bgavt),
                                 contentDescription = "Avatar background",
